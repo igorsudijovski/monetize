@@ -1,4 +1,4 @@
-const { Pool } = require('pg');
+import { Pool } from 'pg';
 
 const pool = new Pool({
   host: process.env.PGHOST || 'localhost',
@@ -8,7 +8,7 @@ const pool = new Pool({
   port: process.env.PGPORT ? parseInt(process.env.PGPORT) : 5432
 });
 
-module.exports = {
-  query: (text, params) => pool.query(text, params),
+export default {
+  query: (text: any, params: any) => pool.query(text, params),
   pool
-};
+}

@@ -3,6 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT UNIQUE NOT NULL,
   name TEXT,
+  google_id TEXT UNIQUE,
   created_at TIMESTAMP DEFAULT now()
 );
 
@@ -30,7 +31,7 @@ CREATE TABLE IF NOT EXISTS applications (
     tile_color TEXT,
     background_color TEXT,
     subscription_id UUID REFERENCES general_subscriptions(id),
-    owner_id TEXT REFERENCES users(id),
+    owner_id UUID REFERENCES users(id),
     created_at TIMESTAMP DEFAULT now()
 );
 
@@ -55,7 +56,7 @@ CREATE TABLE IF NOT EXISTS application_subscription_keys (
     key TEXT UNIQUE NOT NULL,
     stripe_session_id TEXT UNIQUE,
     application_subscription_id UUID REFERENCES application_subscriptions(id),
-    owner_id TEXT REFERENCES users(id),
+    owner_id UUID REFERENCES users(id),
     num_usages INTEGER DEFAULT 0,
     page_id TEXT NOT NULL,
     active BOOLEAN DEFAULT true,
