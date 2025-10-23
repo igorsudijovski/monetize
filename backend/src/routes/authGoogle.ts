@@ -39,7 +39,7 @@ router.get('/google/callback', passport.authenticate('google', { session: false 
             secure: true,
             maxAge: 24 * 60 * 60 * 1000 // 1 day
         });
-        const redirectUrl = `http://localhost:4000/refresh-token`;
+        const redirectUrl = process.env.SUCCESSFUL_LOGIN || "/";
         return res.redirect(redirectUrl);
     } catch (error) {
         return res.status(500).json({ message: 'An error occurred during authentication', error });

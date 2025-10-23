@@ -5,7 +5,7 @@ import {UserEntity} from "../model/UserEntity"; // our middleware to authenticat
 const router = Router();
 
 // mock user info endpoint to return user data
-router.get('/', requireJwt, (req: Request, res: Response) => {
+router.get('/user', requireJwt, (req: Request, res: Response) => {
     try {
         /*
            The requireJwt middleware authenticates the request by verifying

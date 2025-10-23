@@ -7,12 +7,10 @@ import { ThemeProvider } from '@mui/material/styles'
 import theme from './theme'
 
 createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <BrowserRouter>
         <App />
       </BrowserRouter>
     </ThemeProvider>
-  </React.StrictMode>
 )

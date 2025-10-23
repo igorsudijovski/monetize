@@ -2,7 +2,7 @@ import jwt, {PrivateKey, PublicKey} from "jsonwebtoken";
 import type {StringValue} from "ms";
 import fs from "fs";
 
-const JWT_DURATION: StringValue = '30m';
+const JWT_DURATION: StringValue = '10m';
 const REFRESH_DURATION: StringValue = '1d';
 
 export const generateKey = (googleId: string, email: string, userId: string): string => {

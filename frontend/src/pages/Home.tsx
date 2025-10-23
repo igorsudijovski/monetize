@@ -12,7 +12,7 @@ export default function Home() {
         This is a starter project built with React, Vite, TypeScript, and Material UI.
       </Typography>
       <Stack direction='row' spacing={2}>
-        <Button variant='contained' component={RouterLink} to='/dashboard'>Dashboard</Button>
+        <Button variant='contained' component={RouterLink} to='/auth/dashboard'>Dashboard</Button>
         <Button variant='outlined' component={RouterLink} to='/login'>Login</Button>
       </Stack>
     </Container>
