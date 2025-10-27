@@ -10,8 +10,13 @@ const router = Router();
   When the frontend calls it, the user will be redirected to the
   Google accounts page to log in with their Google account.
 */
-// Google OAuth2.0 route
-router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+router.get('/google', function(req, response) {
+    passport.authenticate('google', {
+        scope: ['profile', 'email'],
+        state: req.query.appId + ''
+    })(req, response);
+});
 
 
 /*
@@ -31,6 +36,8 @@ router.get('/google/callback', passport.authenticate('google', { session: false 
             return res.status(401).json({ message: 'Authentication failed: user not found' });
         }
 
+        const appId = req.query.state !== 'undefined' ? '?appId=' + req.query.state : '';
+
         const refreshToken = generateRefresh(user.userId);
 
 
@@ -39,11 +46,14 @@ router.get('/google/callback', passport.authenticate('google', { session: false 
             secure: true,
             maxAge: 24 * 60 * 60 * 1000 // 1 day
         });
-        const redirectUrl = process.env.SUCCESSFUL_LOGIN || "/";
+        const redirectUrl = process.env.SUCCESSFUL_LOGIN + appId;
         return res.redirect(redirectUrl);
     } catch (error) {
         return res.status(500).json({ message: 'An error occurred during authentication', error });
     }
 });
+
+
+
 
 export default router;

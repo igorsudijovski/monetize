@@ -10,5 +10,6 @@ const pool = new Pool({
 
 export default {
   query: (text: any, params: any) => pool.query(text, params),
+  queryAll: (text: any) => pool.query(text),
   pool
 }

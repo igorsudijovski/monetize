@@ -11,6 +11,9 @@ export default function Dashboard() {
     axios.get('/api/user', { withCredentials: true })
       .then(response => setUser(response.data))
       .catch(error => console.error('Error fetching user data:', error));
+    axios.get('/api/my-subscription', { withCredentials: true })
+      .then(response => console.log(response))
+      .catch(error => console.error('Error fetching user data:', error));
   }, []);
   return (
     <Container sx={{ mt: 6 }}>

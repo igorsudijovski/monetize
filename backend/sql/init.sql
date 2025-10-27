@@ -3,7 +3,8 @@ CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email TEXT UNIQUE NOT NULL,
   name TEXT,
-  google_id TEXT UNIQUE,
+  google_id TEXT UNIQUE NOT NULL,
+  stripe_account_id TEXT,
   created_at TIMESTAMP DEFAULT now()
 );
 
@@ -11,27 +12,30 @@ CREATE TABLE IF NOT EXISTS general_subscriptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   description TEXT,
+  list_text TEXT,
   type TEXT UNIQUE NOT NULL,
-  stripe_percentage INTEGER NOT NULL,
-  stripe_flat_fee INTEGER NOT NULL,
-  percentage INTEGER NOT NULL,
+  stripe_product_id TEXT,
+  percentage DECIMAL(6, 2) NOT NULL,
   price INTEGER NOT NULL,
   currency TEXT DEFAULT 'eur',
   active BOOLEAN DEFAULT true,
-  expires_at TIMESTAMP,
+  expires_at TIMESTAMP DEFAULT NULL,
   created_at TIMESTAMP DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS applications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
-    redirect_uri TEXT NOT NULL,
+    redirect_uri TEXT NULL,
     client_id TEXT UNIQUE NOT NULL,
     client_secret TEXT NOT NULL,
     tile_color TEXT,
     background_color TEXT,
+    stripe_session_id TEXT,
     subscription_id UUID REFERENCES general_subscriptions(id),
     owner_id UUID REFERENCES users(id),
+    active boolean default true,
+    started_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT now()
 );
 
@@ -39,6 +43,7 @@ CREATE TABLE IF NOT EXISTS application_subscriptions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
     description TEXT,
+    list_text TEXT,
     price INTEGER NOT NULL,
     currency TEXT DEFAULT 'eur',
     application_id UUID REFERENCES applications(id),
@@ -64,3 +69,8 @@ CREATE TABLE IF NOT EXISTS application_subscription_keys (
     last_used_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT now()
 );
+
+insert into general_subscriptions(name, description, list_text, type, stripe_product_id, percentage, price) values
+('Free', 'This is a free offer', 'Those are\nThis is something else\nAnd This blablabla', 'FREE', null, 30, 0),
+('Basic', 'This is a Basic offer', 'Basic one\nMaybe something is less', 'BASIC', 'prod_TJQyNAJoh0M1gS', 25, 5),
+('pro', 'This is a Pro offer', 'Basic one\nSomething new\nThis is third\nBlabla forth\nLast one', 'PRO', 'prod_TJQyzhxeM5wz1Z',15, 35);

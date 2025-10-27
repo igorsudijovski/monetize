@@ -10,6 +10,8 @@ import userRoute from "./routes/userRoute";
 import refreshTokenRoute from "./routes/tokenRefresh";
 import cookieParser from "cookie-parser";
 import stripeRoute from "./routes/stripeRoute";
+import generalSubscriptionRoute from "./routes/generalSubscriptionRoute";
+import applicationRoute from "./routes/applicationRoute";
 
 const app = express();
 const FRONTEND = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -55,7 +57,11 @@ app.use('/', refreshTokenRoute);
 
 app.use('/api', logOutRoute);
 
+app.use('/api', applicationRoute)
+
 app.use('/stripe', stripeRoute);
+
+app.use('/general', generalSubscriptionRoute)
 
 // default route
 app.get('/', (req: Request, res: Response) => {

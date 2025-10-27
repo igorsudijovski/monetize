@@ -5,7 +5,7 @@ import {createUser, getUserByGoogleId} from "../service/UserService";
 const options = {
     clientID: process.env.GOOGLE_CLIENT_ID || '',
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-    callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:4000/auth/google/callback',
+    callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:4000/auth/google/callback'
 };
 
 async function verify(accessToken: string, refreshToken: string, profile: Profile, done: VerifyCallback) {
