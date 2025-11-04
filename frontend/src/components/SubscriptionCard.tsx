@@ -5,77 +5,137 @@ import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 import EuroIcon from '@mui/icons-material/Euro';
-import {Button, Link} from "@mui/material";
-import {useContext} from "react";
-import {AuthContext} from "../context/authContext";
-
-export default function SubscriptionCard({id, title, price, items}: {
-    id: string,
-    title: string,
-    price: string,
-    items?: string[]
-}) {
-
-    const {isLoggedIn} = useContext(AuthContext);
+import { Button, Link, Chip } from "@mui/material";
+import { useContext } from "react";
+import { AuthContext } from "../context/authContext";
+import {SubscriptionCardProps} from "../model/SubscriptionCardProps";
 
 
-    const printItems = (items: string[]) => {
-        const liItems = items.map((i, index) => (<li key={id + index}>{i}</li>))
-        return (<ul>{liItems}</ul>)
-    }
 
+export default function SubscriptionCard({
+                                             id,
+                                             title,
+                                             description,
+                                             price,
+                                             items = [],
+                                             type = "one_time",
+                                             days,
+                                             usageLimit,
+                                             showAdminActions = false,
+                                             onEdit,
+                                             onDelete
+                                         }: SubscriptionCardProps) {
+    const { isLoggedIn } = useContext(AuthContext);
+
+    const printItems = (items: string[]) => (
+        <ul style={{ margin: 0, paddingLeft: 20 }}>
+            {items.map((i, index) => (
+                <li key={id + index}>{i}</li>
+            ))}
+        </ul>
+    );
+
+    const getTypeLabel = () => {
+        switch (type) {
+            case "subscription":
+                return `Subscription (${days ?? 0} days)`;
+            case "usage_limited":
+                return `Usage-Limited (${usageLimit ?? 0} uses)`;
+            case "lifetime":
+                return "Lifetime Access";
+            default:
+                return "One-Time Purchase";
+        }
+    };
 
     return (
-        <Card variant="outlined" sx={{maxWidth: 360}}>
-            <Box sx={{p: 2}}>
+        <Card
+            variant="outlined"
+            sx={{
+                width: 1,
+                borderRadius: 3,
+                boxShadow: 2,
+                ":hover": { boxShadow: 4 },
+                transition: "all 0.2s ease-in-out"
+            }}
+        >
+            <Box sx={{ p: 2 }}>
                 <Stack
                     direction="row"
-                    sx={{justifyContent: 'space-between', alignItems: 'center'}}
+                    sx={{ justifyContent: "space-between", alignItems: "center" }}
                 >
                     <Typography gutterBottom variant="h5" component="div">
-                        {title}
+                        {title || "Untitled Plan"}
                     </Typography>
-                    <Stack direction={"row"}>
-                        <Typography textAlign={"right"} variant="h6" component="div">
-                            {price}
+                    <Stack direction="row" alignItems="center">
+                        <Typography textAlign="right" variant="h6" component="div">
+                            {price || "0"}
                         </Typography>
-                        <Typography fontSize={15} gutterBottom sx={{mt: 1, pl: 0.3}} textAlign={"left"} variant="h6"
-                                    component="div">
-                            <EuroIcon fontSize={"inherit"}/>
+                        <Typography
+                            fontSize={15}
+                            gutterBottom
+                            sx={{ mt: 1, pl: 0.3 }}
+                            textAlign="left"
+                            variant="h6"
+                            component="div"
+                        >
+                            <EuroIcon fontSize="inherit" />
                         </Typography>
                     </Stack>
                 </Stack>
-                <Typography variant="body2" sx={{color: 'text.secondary'}}>
-                    Pinstriped cornflower blue cotton blouse takes you on a walk to the park or
-                    just down the hall.
-                </Typography>
+
+                <Chip
+                    label={getTypeLabel()}
+                    color="info"
+                    size="small"
+                    sx={{ mb: 1 }}
+                />
+
+                {(showAdminActions == true || description !== undefined) &&
+                    (<Typography variant="body2" sx={{ color: "text.secondary", minHeight: 48 }}>
+                    {description || "Your subscription description will appear here."}
+                </Typography>)}
             </Box>
-            <Divider/>
-            {items && (
+
+            <Divider />
+
+            {items.length > 0 && (
                 <Box>
-                    <Box sx={{p: 0.5}}>
-                        <Typography component={'span'} variant="body2">
+                    <Box sx={{ p: 1 }}>
+                        <Typography component="span" variant="body2">
                             {printItems(items)}
                         </Typography>
                     </Box>
-                    <Divider/>
+                    <Divider />
                 </Box>
             )}
-            <Box sx={{p: 2}}>
-                <Stack direction="row-reverse" spacing={1}>
-                    {isLoggedIn ?
-                        (<Link href={'/login-redirect?appId=' + id}>
-                            <Button color={"primary"} variant={"contained"}>
-                                Buy
+
+            <Box sx={{ p: 2 }}>
+                {showAdminActions && (
+                    <Stack direction="row" spacing={1}>
+                        <Button variant="text" size="small" color="warning" onClick={onEdit}>
+                            Edit
+                        </Button>
+                        <Button variant="text" size="small" color="error" onClick={onDelete}>
+                            Delete
+                        </Button>
+                    </Stack>
+                )}
+                {!showAdminActions && (<Stack direction="row-reverse" spacing={1}>
+                    {isLoggedIn ? (
+                        <Link href={`/login-redirect?appId=${id}`}>
+                            <Button color="primary" variant="contained">
+                                {price === 0 ? 'Subscribe' : 'Buy'}
                             </Button>
-                        </Link>) :
-                        (<Link href={'http://localhost:4000/auth/google?appId=' + id}>
-                            <Button color={"primary"} variant={"contained"}>
-                                Login & Buy
+                        </Link>
+                    ) : (
+                        <Link href={`http://localhost:4000/auth/google?appId=${id}`}>
+                            <Button color="primary" variant="contained">
+                                {price === 0 ? 'Login' : 'Login & Buy'}
                             </Button>
-                        </Link>)
-                    }
-                </Stack>
+                        </Link>
+                    )}
+                </Stack>)}
             </Box>
         </Card>
     );

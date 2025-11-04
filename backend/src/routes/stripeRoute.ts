@@ -64,7 +64,7 @@ router.get('/subscription/pay', requireJwt, async (req: Request, res: Response) 
 
 router.get('/subscription/success', async (req: Request, res: Response) => {
     try {
-        const session = await stripeRoute.checkout.sessions.retrieve(req.query.sessionId + '');
+        const session = await stripeRoute.checkout.sessions.retrieve(req.query.sessionId + '', {expand: ['payment_intent']});
         if (session.status == 'complete') {
             const userId = req.query.userId + '';
             const subscriptionId = req.query.appId + '';
@@ -76,6 +76,21 @@ router.get('/subscription/success', async (req: Request, res: Response) => {
     }
 
 });
+
+router.get('/subscription/success/:id', async (req: Request, res: Response) => {
+    try {
+        const session = await stripeRoute.checkout.sessions.retrieve(req.params.id + '', {expand: ['payment_intent']});
+        const tr = await stripeRoute.balanceTransactions.list({source: "ch_3SK3DnLAO7oNOYUf1RdkIrXe"})
+        if (session.status == 'complete') {
+            return res.status(200).json({s: session, b: tr});
+        }
+    } catch (error) {
+        return res.status(400).json({ message: 'Invalid payment', error });
+    }
+
+});
+
+
 
 
 export default router;

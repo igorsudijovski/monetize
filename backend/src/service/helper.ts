@@ -4,5 +4,3 @@ export const emptyOrRows = (rows: any): any[] => {
     }
     return rows;
 }
-
-const camelize = (s: string) => s.replace(/_./g, x=>x[1].toUpperCase())

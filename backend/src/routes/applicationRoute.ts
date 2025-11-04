@@ -2,6 +2,8 @@ import {Request, Response, Router} from "express";
 import requireJwt from "../middleware/requireJwt";
 import {getApplicationByUserId} from "../service/ApplicationsService";
 import {UserEntity} from "../model/UserEntity";
+import {getRestriction} from "../model/GeneralSubscriptionsType";
+import {getSubscriptionById} from "../service/GeneralSubscriptionService";
 
 const router = Router();
 
@@ -12,9 +14,16 @@ router.get('/my-subscription', requireJwt,  async (req: Request, res: Response) 
     }
     const app = await getApplicationByUserId(user.id);
     if (app == undefined) {
-        return res.status(400).json({message: 'Unauthorize'})
+        return res.status(400).json({message: 'No Application'})
     }
-    return res.status(200).json(app);
+
+    const generalSub = await getSubscriptionById(app.subscriptionId);
+    if (generalSub == undefined) {
+        return res.status(400).json({message: 'No Application'})
+    }
+
+    const restriction = getRestriction(generalSub.type);
+    return res.status(200).json({app: app, restriction: restriction});
 })
 
 export default router;

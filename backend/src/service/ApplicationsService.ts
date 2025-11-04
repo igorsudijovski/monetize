@@ -4,9 +4,18 @@ import {emptyOrRows} from "./helper";
 import camelize from "camelize-ts";
 import {ApplicationsEntity} from "../model/ApplicationsEntity";
 import {v4 as uuidv4} from 'uuid';
+import {GeneralSubscriptionsType} from "../model/GeneralSubscriptionsType";
 
 export const getApplicationByUserId = async (id: string): Promise<ApplicationsEntity | undefined> => {
     const result: QueryArrayResult = await db.query("select * from applications where owner_id = $1", [id]);
+    const subs = emptyOrRows(result.rows);
+    if (subs.length !== 1) {
+        return undefined;
+    }
+    return mapApplication(subs[0]);
+}
+export const getApplicationByUserIdAndAppId = async (id: string, appId: string): Promise<ApplicationsEntity | undefined> => {
+    const result: QueryArrayResult = await db.query("select * from applications where owner_id = $1 and id = $2", [id, appId]);
     const subs = emptyOrRows(result.rows);
     if (subs.length !== 1) {
         return undefined;
