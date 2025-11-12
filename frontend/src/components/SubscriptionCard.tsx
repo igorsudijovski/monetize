@@ -5,11 +5,12 @@ import Stack from '@mui/material/Stack';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 import EuroIcon from '@mui/icons-material/Euro';
-import { Button, Link, Chip } from "@mui/material";
-import { useContext } from "react";
-import { AuthContext } from "../context/authContext";
+import {Button, Link, Chip, IconButton} from "@mui/material";
+import {useContext} from "react";
+import {AuthContext} from "../context/authContext";
 import {SubscriptionCardProps} from "../model/SubscriptionCardProps";
-
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 
 
 export default function SubscriptionCard({
@@ -17,23 +18,37 @@ export default function SubscriptionCard({
                                              title,
                                              description,
                                              price,
+                                             active,
                                              items = [],
                                              type = "one_time",
                                              days,
                                              usageLimit,
                                              showAdminActions = false,
+                                             adminSide = false,
+                                             onBuy,
                                              onEdit,
-                                             onDelete
+                                             onActivate,
+                                             onDeactivate,
+                                             isFirst,
+                                             isLast,
+                                             move
                                          }: SubscriptionCardProps) {
-    const { isLoggedIn } = useContext(AuthContext);
+    const {isLoggedIn} = useContext(AuthContext);
 
     const printItems = (items: string[]) => (
-        <ul style={{ margin: 0, paddingLeft: 20 }}>
+        <ul style={{margin: 0, paddingLeft: 20}}>
             {items.map((i, index) => (
                 <li key={id + index}>{i}</li>
             ))}
         </ul>
     );
+
+    const shouldShowComponent = (): boolean => {
+        if (showAdminActions === true) {
+            return true;
+        }
+        return active;
+    }
 
     const getTypeLabel = () => {
         switch (type) {
@@ -48,21 +63,33 @@ export default function SubscriptionCard({
         }
     };
 
-    return (
+    return shouldShowComponent() && (
         <Card
             variant="outlined"
             sx={{
+                backgroundColor: active ? "background.paper" : "grey.400",
                 width: 1,
                 borderRadius: 3,
                 boxShadow: 2,
-                ":hover": { boxShadow: 4 },
-                transition: "all 0.2s ease-in-out"
+                ":hover": {boxShadow: 4},
+                transition: "all 0.2s ease-in-out",
+                height: showAdminActions ? 1 : 'auto'
             }}
         >
-            <Box sx={{ p: 2 }}>
+            {showAdminActions &&
+                (<Box sx={{mt: 1, display: "flex", justifyContent: "center", gap: 1, pb: 2, width: 1}}>
+                    <IconButton size="medium" sx={{width: 0.5, "&:hover": {backgroundColor: "transparent"}}} disabled={isFirst == true} onClick={() => move && move("left")}>
+                        {isFirst !== true && (<ArrowBackIosNewIcon fontSize="medium"/>)}
+                    </IconButton>
+
+                    <IconButton size="medium"  sx={{width: 0.5, "&:hover": {backgroundColor: "transparent"}}} disabled={isLast == true } onClick={() => move && move("right")}>
+                        {isLast !== true && (<ArrowForwardIosIcon fontSize="medium"/>)}
+                    </IconButton>
+                </Box>)}
+            <Box sx={{p: 2}}>
                 <Stack
                     direction="row"
-                    sx={{ justifyContent: "space-between", alignItems: "center" }}
+                    sx={{justifyContent: "space-between", alignItems: "center"}}
                 >
                     <Typography gutterBottom variant="h5" component="div">
                         {title || "Untitled Plan"}
@@ -74,67 +101,74 @@ export default function SubscriptionCard({
                         <Typography
                             fontSize={15}
                             gutterBottom
-                            sx={{ mt: 1, pl: 0.3 }}
+                            sx={{mt: 1, pl: 0.3}}
                             textAlign="left"
                             variant="h6"
                             component="div"
                         >
-                            <EuroIcon fontSize="inherit" />
+                            <EuroIcon fontSize="inherit"/>
                         </Typography>
                     </Stack>
                 </Stack>
 
                 <Chip
                     label={getTypeLabel()}
-                    color="info"
+                    color={active ? 'info' : 'default'}
                     size="small"
-                    sx={{ mb: 1 }}
+                    sx={{mb: 1}}
                 />
 
                 {(showAdminActions == true || description !== undefined) &&
-                    (<Typography variant="body2" sx={{ color: "text.secondary", minHeight: 48 }}>
-                    {description || "Your subscription description will appear here."}
-                </Typography>)}
+                    (<Typography variant="body2" sx={{color: "text.secondary", minHeight: 48}}>
+                        {description || "Your subscription description will appear here."}
+                    </Typography>)}
             </Box>
 
-            <Divider />
+            <Divider/>
 
             {items.length > 0 && (
                 <Box>
-                    <Box sx={{ p: 1 }}>
+                    <Box sx={{p: 1}}>
                         <Typography component="span" variant="body2">
                             {printItems(items)}
                         </Typography>
                     </Box>
-                    <Divider />
+                    <Divider/>
                 </Box>
             )}
 
-            <Box sx={{ p: 2 }}>
+            <Box sx={{p: 2}}>
                 {showAdminActions && (
                     <Stack direction="row" spacing={1}>
                         <Button variant="text" size="small" color="warning" onClick={onEdit}>
                             Edit
                         </Button>
-                        <Button variant="text" size="small" color="error" onClick={onDelete}>
-                            Delete
-                        </Button>
+                        {active && (<Button variant="text" size="small" color="error" onClick={onDeactivate}>
+                            Deactivate
+                        </Button>)}
+                        {!active && (<Button variant="text" size="small" color="error" onClick={onActivate}>
+                            Activate
+                        </Button>)}
                     </Stack>
                 )}
                 {!showAdminActions && (<Stack direction="row-reverse" spacing={1}>
-                    {isLoggedIn ? (
-                        <Link href={`/login-redirect?appId=${id}`}>
-                            <Button color="primary" variant="contained">
+                    {adminSide ? (
+                            <Button color="primary" variant="contained" onClick={onBuy}>
                                 {price === 0 ? 'Subscribe' : 'Buy'}
-                            </Button>
-                        </Link>
-                    ) : (
-                        <Link href={`http://localhost:4000/auth/google?appId=${id}`}>
-                            <Button color="primary" variant="contained">
-                                {price === 0 ? 'Login' : 'Login & Buy'}
-                            </Button>
-                        </Link>
-                    )}
+                            </Button>) :
+                        (isLoggedIn ? (
+                            <Link href={`/login-redirect?appId=${id}`}>
+                                <Button color="primary" variant="contained">
+                                    {price === 0 ? 'Subscribe' : 'Buy'}
+                                </Button>
+                            </Link>
+                        ) : (
+                            <Link href={`http://localhost:4000/auth/google?appId=${id}`}>
+                                <Button color="primary" variant="contained">
+                                    {price === 0 ? 'Login' : 'Login & Buy'}
+                                </Button>
+                            </Link>
+                        ))}
                 </Stack>)}
             </Box>
         </Card>

@@ -1,10 +1,8 @@
 import {QueryArrayResult} from "pg";
 import db from "../db";
-import {emptyOrRows} from "./helper";
-import camelize from "camelize-ts";
+import {camelize, emptyOrRows} from "./helper";
 import {ApplicationsEntity} from "../model/ApplicationsEntity";
 import {v4 as uuidv4} from 'uuid';
-import {GeneralSubscriptionsType} from "../model/GeneralSubscriptionsType";
 
 export const getApplicationByUserId = async (id: string): Promise<ApplicationsEntity | undefined> => {
     const result: QueryArrayResult = await db.query("select * from applications where owner_id = $1", [id]);

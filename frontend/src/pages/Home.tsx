@@ -2,12 +2,13 @@ import React, {useContext, useState} from 'react'
 import {Container, Grid, Typography} from '@mui/material'
 import SubscriptionCard from "../components/SubscriptionCard";
 import {AxiosContext} from "../api/axiosInstance";
-import {GeneralSubscriptions, mapToSubscriptionCard} from "../model/GeneralSubscriptions";
+import {GeneralSubscriptionsEntity} from "@backend/GeneralSubscriptionsEntity";
+import {mapToSubscriptionCard} from "../model/GeneralSubscriptions";
 
 
 export default function Home() {
     const { axios } = useContext(AxiosContext);
-    const [subscriptions, setSub] = useState<GeneralSubscriptions[]>([]);
+    const [subscriptions, setSub] = useState<GeneralSubscriptionsEntity[]>([]);
 
     React.useEffect(() => {
         console.log('Fetching user data...');

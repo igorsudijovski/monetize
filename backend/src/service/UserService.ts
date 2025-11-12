@@ -1,8 +1,7 @@
 import db from '../db';
 import {UserEntity} from "../model/UserEntity";
 import {QueryArrayResult} from "pg";
-import {emptyOrRows} from "./helper";
-import camelize from "camelize-ts";
+import {camelize, emptyOrRows} from "./helper";
 
 export const getUserById = async (id: string): Promise<UserEntity | undefined> => {
     const result: QueryArrayResult = await db.query("select id, email, name, google_id from users where id = $1", [id]);

@@ -26,4 +26,5 @@ router.get('/my-subscription', requireJwt,  async (req: Request, res: Response) 
     return res.status(200).json({app: app, restriction: restriction});
 })
 
+
 export default router;

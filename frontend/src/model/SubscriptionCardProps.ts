@@ -4,6 +4,7 @@ export interface SubscriptionCardProps {
     id: string;
     title: string;
     description?: string;
+    active: boolean;
     price: number;
     items?: string[];
     type?: SubscriptionType;
@@ -11,6 +12,13 @@ export interface SubscriptionCardProps {
     usageLimit?: number;
 
     showAdminActions?: boolean;
+    adminSide: boolean,
     onEdit?: () => void;
-    onDelete?: () => void;
+    onActivate?: () => void;
+    onDeactivate?: () => void;
+    onBuy?: () => void;
+
+    isFirst?: boolean;
+    isLast?: boolean;
+    move?: (direction: "left" | "right") => void;
 }

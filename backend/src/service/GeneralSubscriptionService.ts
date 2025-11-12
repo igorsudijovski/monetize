@@ -1,8 +1,7 @@
 import {GeneralSubscriptionsEntity} from "../model/GeneralSubscriptionsEntity";
 import {QueryArrayResult} from "pg";
 import db from "../db";
-import {emptyOrRows} from "./helper";
-import camelize from "camelize-ts";
+import {camelize, emptyOrRows} from "./helper";
 
 export const getSubscriptions = async () : Promise<GeneralSubscriptionsEntity[]> => {
     const result: QueryArrayResult = await db.queryAll("select * from general_subscriptions where (expires_at is null or expires_at < now()) and active is true");
