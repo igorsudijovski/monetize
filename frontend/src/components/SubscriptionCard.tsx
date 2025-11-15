@@ -29,6 +29,7 @@ export default function SubscriptionCard({
                                              onEdit,
                                              onActivate,
                                              onDeactivate,
+                                             noButtons = false,
                                              isFirst,
                                              isLast,
                                              move
@@ -137,7 +138,8 @@ export default function SubscriptionCard({
                 </Box>
             )}
 
-            <Box sx={{p: 2}}>
+            {(noButtons === undefined || !noButtons) &&
+                (<Box sx={{p: 2}}>
                 {showAdminActions && (
                     <Stack direction="row" spacing={1}>
                         <Button variant="text" size="small" color="warning" onClick={onEdit}>
@@ -157,7 +159,7 @@ export default function SubscriptionCard({
                                 {price === 0 ? 'Subscribe' : 'Buy'}
                             </Button>) :
                         (isLoggedIn ? (
-                            <Link href={`/login-redirect?appId=${id}`}>
+                            <Link href={`/login-redirect?appId=${id}&refresh=true`}>
                                 <Button color="primary" variant="contained">
                                     {price === 0 ? 'Subscribe' : 'Buy'}
                                 </Button>
@@ -170,7 +172,7 @@ export default function SubscriptionCard({
                             </Link>
                         ))}
                 </Stack>)}
-            </Box>
+            </Box>)}
         </Card>
     );
 }

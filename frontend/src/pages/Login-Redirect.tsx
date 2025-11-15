@@ -19,13 +19,18 @@ export default function LoginRedirect() {
 
   useEffect(() => {
     refreshToken().then(() => {
-
+      const refresh = searchParams.get("refresh");
       if (searchParams.get("appId") !== null) {
         axios.get('/stripe/subscription/pay?id=' + searchParams.get("appId"), {withCredentials: true, maxRedirects: 2})
             .then((response) => {
               if (response.data.home !== undefined && response.data.home == true) {
                 setLoaded(true);
-                navigate('/auth/dashboard');
+                if (refresh === 'true') {
+                  navigate('/auth/dashboard?refresh=true');
+                } else {
+                  navigate('/auth/dashboard');
+                }
+
               }
               if (response.data.url !== undefined && response.data.url !== '') {
                 setLoaded(true);

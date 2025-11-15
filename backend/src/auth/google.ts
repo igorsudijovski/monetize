@@ -20,7 +20,8 @@ async function verify(accessToken: string, refreshToken: string, profile: Profil
                 id: '', // assuming id is auto-generated
                 email: email,
                 name: name,
-                googleId: profile.id
+                googleId: profile.id,
+                applicationSubscriptionIds: [],
             });
         }
         return done(null, {userId: user.id});

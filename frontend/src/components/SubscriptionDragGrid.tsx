@@ -11,7 +11,7 @@ export default function SubscriptionDragGrid({subscriptions, onEdit, onActivate,
                                                      onActivate: (id: string) => void;
                                                      onDeactivate: (id: string) => void;
                                                      onBuy: () => void;
-                                                     onSwap: (subId: string, direction: "left" | "right") => void;
+                                                     onSwap: (subId: string, otherSudId: string) => void;
                                                  }) {
 
     const ANIM_MS = 300;
@@ -60,10 +60,10 @@ export default function SubscriptionDragGrid({subscriptions, onEdit, onActivate,
 
         const item = items[index];
 
-        onSwap(item.id, dir);
+        const swapIdx = dir === "left" ? index - 1 : index + 1;
+        onSwap(item.id, items[swapIdx].id);
 
         const newItems = [...items];
-        const swapIdx = dir === "left" ? index - 1 : index + 1;
         [newItems[index], newItems[swapIdx]] = [newItems[swapIdx], newItems[index]];
         setItems(newItems);
 

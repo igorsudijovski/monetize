@@ -4,7 +4,7 @@ import {camelize, emptyOrRows} from "./helper";
 import {ApplicationSubscriptionsEntity} from "../model/ApplicationSubscriptionsEntity";
 
 export const getAppSubscriptions = async (appId: string) : Promise<ApplicationSubscriptionsEntity[]> => {
-    const result: QueryArrayResult = await db.query("select * from application_subscriptions where application_id = $1 order by order_number", [appId]);
+    const result: QueryArrayResult = await db.query("select * from application_subscriptions where application_id = $1 and disabled = false order by order_number", [appId]);
     const subs = emptyOrRows(result.rows);
     if (result.rowCount == 0) {
         return [];
@@ -13,7 +13,7 @@ export const getAppSubscriptions = async (appId: string) : Promise<ApplicationSu
 }
 
 export const getAppSubscriptionById = async (id: string, appId: string): Promise<ApplicationSubscriptionsEntity | undefined> => {
-    const result: QueryArrayResult = await db.query("select * from application_subscriptions where id = $1 and application_id = $2 order by order_number", [id, appId]);
+    const result: QueryArrayResult = await db.query("select * from application_subscriptions where id = $1 and application_id = $2", [id, appId]);
     const subs = emptyOrRows(result.rows);
     if (subs.length !== 1) {
         return undefined;
@@ -31,7 +31,15 @@ export const hasBoughtSubscription = async (appId: string): Promise<boolean> => 
     return subs[0].count > 0;
 }
 export const numberOfAppSubscriptions = async (appId: string): Promise<number> => {
-    const result: QueryArrayResult = await db.query("select count(*) from application_subscriptions where application_id = $1 ", [appId]);
+    const result: QueryArrayResult = await db.query("select count(*) from application_subscriptions where application_id = $1 and disabled = false", [appId]);
+    const subs = emptyOrRows(result.rows);
+    if (subs.length !== 1) {
+        return 0;
+    }
+    return subs[0].count;
+}
+export const numberOfActiveAppSubscriptions = async (appId: string): Promise<number> => {
+    const result: QueryArrayResult = await db.query("select count(*) from application_subscriptions where application_id = $1 and disabled = false and active = true", [appId]);
     const subs = emptyOrRows(result.rows);
     if (subs.length !== 1) {
         return 0;
@@ -85,15 +93,43 @@ export const updateAppSubscription = async (id: string, appSub: ApplicationSubsc
     return true;
 }
 
-export const swapAppSubscriptionOrder = async (appId: string, id: string, orderNumber: number, left: boolean): Promise<boolean> => {
-    const newOrderNumber = left ? orderNumber - 1 : orderNumber + 1;
-    const otherAppSubId = await getAppIdByOrderNumber(appId, newOrderNumber);
-    if (otherAppSubId === undefined) {
+export const swapAppSubscriptionOrder = async (appId: string, firstAppId: string, secondAppId: string): Promise<boolean> => {
+    const appSub = await getAppSubscriptionById(firstAppId, appId);
+    const otherAppSub = await getAppSubscriptionById(secondAppId, appId);
+    if (appSub === undefined || otherAppSub === undefined) {
         return false;
     }
-    await db.query("update application_subscriptions set order_number = $1 where id = $2", [newOrderNumber, id]);
-    await db.query("update application_subscriptions set order_number = $1 where id = $2", [orderNumber, otherAppSubId]);
+    await db.query("update application_subscriptions set order_number = $1 where id = $2", [otherAppSub.orderNumber, appSub.id]);
+    await db.query("update application_subscriptions set order_number = $1 where id = $2", [appSub.orderNumber, otherAppSub.id]);
     return true;
+}
+
+export const disableBySubscription = async (appId: string, disabled: boolean) : Promise<boolean> => {
+    const result: QueryArrayResult = await db.query("update application_subscriptions set disabled = $2 where application_id = $1 and num_days > 0  returning id", [appId, disabled]);
+    const subs = emptyOrRows(result.rows);
+    return subs.length > 0;
+}
+
+export const disableByNumUsage = async (appId: string, disabled: boolean) : Promise<boolean> => {
+    const result: QueryArrayResult = await db.query("update application_subscriptions set disabled = $2 where application_id = $1 and num_usages > 0  returning id", [appId, disabled]);
+    const subs = emptyOrRows(result.rows);
+    return subs.length > 0;
+}
+export const disableByLifeTime = async (appId: string, disabled: boolean) : Promise<boolean> => {
+    const result: QueryArrayResult = await db.query("update application_subscriptions set disabled = $2 where application_id = $1 and is_lifetime is true  returning id", [appId, disabled]);
+    const subs = emptyOrRows(result.rows);
+    return subs.length > 0;
+}
+export const disableOneTimeUse = async (appId: string, disabled: boolean) : Promise<boolean> => {
+    const result: QueryArrayResult = await db.query("update application_subscriptions set disabled = $2 where application_id = $1 and one_time_use is true  returning id", [appId, disabled]);
+    const subs = emptyOrRows(result.rows);
+    return subs.length > 0;
+}
+
+export const disableAllSubscriptions = async (appId: string) : Promise<boolean> => {
+    const result: QueryArrayResult = await db.query("update application_subscriptions set active = false where application_id = $1  returning id", [appId]);
+    const subs = emptyOrRows(result.rows);
+    return subs.length > 0;
 }
 
 const mapSubscription = (sub: any): ApplicationSubscriptionsEntity => {
@@ -112,12 +148,4 @@ const getNextOrderNumber = async (appId: string): Promise<number> => {
     }
     return subs[0].max_order + 1;
 }
-const getAppIdByOrderNumber = async (appId: string, orderNumber: number): Promise<string | undefined> => {
-    const result: QueryArrayResult = await db.query("select id from application_subscriptions where application_id = $1 and order_number = $2", [appId, orderNumber]);
-    const subs = emptyOrRows(result.rows);
-    if (subs.length !== 1) {
-        return undefined;
-    }
-    return subs[0].id;
-};
 

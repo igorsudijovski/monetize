@@ -18,6 +18,8 @@ export interface SubscriptionCardProps {
     onDeactivate?: () => void;
     onBuy?: () => void;
 
+    noButtons?: boolean;
+
     isFirst?: boolean;
     isLast?: boolean;
     move?: (direction: "left" | "right") => void;

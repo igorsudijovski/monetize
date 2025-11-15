@@ -4,7 +4,7 @@ import db from "../db";
 import {camelize, emptyOrRows} from "./helper";
 
 export const getSubscriptions = async () : Promise<GeneralSubscriptionsEntity[]> => {
-    const result: QueryArrayResult = await db.queryAll("select * from general_subscriptions where (expires_at is null or expires_at < now()) and active is true");
+    const result: QueryArrayResult = await db.queryAll("select * from general_subscriptions where (expires_at is null or expires_at < now()) and active is true order by created_at desc");
     const subs = emptyOrRows(result.rows);
     if (result.rowCount == 0) {
         return [];

@@ -27,7 +27,29 @@ export const getUserByGoogleId = async (googleId: string): Promise<UserEntity | 
     return mapUser(result);
 }
 
-const mapUser = (result: QueryArrayResult): UserEntity => {
+const mapUser = async (result: QueryArrayResult): Promise<UserEntity> => {
     const users = emptyOrRows(result.rows);
-    return camelize<UserEntity>(users[0]);
+    const user:UserEntity = camelize<UserEntity>(users[0]);
+    const appId = await getApplicationIdsByUserId(user.id);
+    const appKeys = await getApplicationKeysByUserId(user.id);
+    user.applicationId = appId;
+    user.applicationSubscriptionIds = appKeys;
+    return user;
+
+}
+
+const getApplicationIdsByUserId = async (userId: string): Promise<string | undefined> => {
+    const result: QueryArrayResult = await db.query("select id from applications where owner_id = $1", [userId]);
+    const rows = emptyOrRows(result.rows);
+    if (rows.length === 0) {
+        return undefined;
+    }
+    return rows[0].id;
+}
+
+const getApplicationKeysByUserId = async (userId: string): Promise<{id: string, name: string}[]> => {
+    const result: QueryArrayResult = await db.query("select distinct app.id as id, app.name as name from application_subscription_keys as ask " +
+        "left join application_subscriptions as aps on ask.application_subscription_id = aps.id " +
+        "left join applications app on aps.application_id = app.id where ask.owner_id = $1", [userId]);
+    return emptyOrRows(result.rows);
 }

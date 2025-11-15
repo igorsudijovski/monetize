@@ -3,4 +3,6 @@ export interface UserEntity {
     email: string;
     name: string;
     googleId: string;
+    applicationId?: string;
+    applicationSubscriptionIds: {id: string, name: string}[];
 }

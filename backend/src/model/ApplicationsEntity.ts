@@ -4,10 +4,12 @@ export interface ApplicationsEntity {
     redirectUrl: string;
     clientId: string,
     clientSecret: string,
-    tileColor: string,
+    fontColor: string,
+    buttonColor: string,
     backgroundColor: string,
     stripeSessionId: string,
     subscriptionId: string,
     ownerId: string,
+    active: boolean,
     startedAt: Date
 }

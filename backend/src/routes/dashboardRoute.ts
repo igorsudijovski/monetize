@@ -1,11 +1,9 @@
 import {Request, Response, Router} from "express";
 import requireJwt from "../middleware/requireJwt";
-import {getApplicationByUserIdAndAppId} from "../service/ApplicationsService";
-import {UserEntity} from "../model/UserEntity";
 import {getActiveKeys, getInactiveKeys, getIssuedKeysThisMonth, getRevenue} from "../service/DashboardService";
-import {ApplicationsEntity} from "../model/ApplicationsEntity";
 import {getAppSubscriptions} from "../service/ApplicationSubscriptionService";
 import {isUUID} from "../service/helper";
+import {handleApplication} from "./handleApplication";
 
 const router = Router({mergeParams: true});
 
@@ -73,16 +71,5 @@ router.get('/usedkeys', requireJwt,  async (req: Request, res: Response) => {
     return res.status(200).json(response);
 });
 
-export const handleApplication = async (req: Request): Promise<ApplicationsEntity | undefined> => {
-    const user = req.user as UserEntity;
-    if (user == undefined) {
-        return undefined;
-    }
-    const appId = req.params.appId + '';
-    if (!isUUID(appId)) {
-        return undefined;
-    }
-    return await getApplicationByUserIdAndAppId(user.id, appId);
-}
 
 export default router;

@@ -26,7 +26,7 @@ CREATE TABLE IF NOT EXISTS general_subscriptions (
 CREATE TABLE IF NOT EXISTS applications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL,
-    redirect_uri TEXT NULL,
+    redirect_url TEXT NULL,
     client_id TEXT UNIQUE NOT NULL,
     client_secret TEXT NOT NULL,
     tile_color TEXT,
@@ -35,7 +35,8 @@ CREATE TABLE IF NOT EXISTS applications (
     subscription_id UUID REFERENCES general_subscriptions(id),
     owner_id UUID REFERENCES users(id),
     active boolean default true,
-    started_at TIMESTAMP,
+    disabled boolean default false,
+    expired_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT now()
 );
 

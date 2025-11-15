@@ -6,7 +6,7 @@ import {GeneralSubscriptionsEntity} from "@backend/GeneralSubscriptionsEntity";
 import {mapToSubscriptionCard} from "../model/GeneralSubscriptions";
 
 
-export default function Home() {
+export default function Home({showTopBar = true}: { showTopBar?: boolean }) {
     const { axios } = useContext(AxiosContext);
     const [subscriptions, setSub] = useState<GeneralSubscriptionsEntity[]>([]);
 
@@ -19,9 +19,9 @@ export default function Home() {
 
     return (
         <Container sx={{ mt: 6, mb: 6 }}>
-            <Typography variant="h4" sx={{ fontWeight: "bold", mb: 4 }}>
+            {showTopBar && (<Typography variant="h4" sx={{ fontWeight: "bold", mb: 4 }}>
                 Available Subscriptions
-            </Typography>
+            </Typography>)}
 
             <Grid
                 container

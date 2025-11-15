@@ -1,11 +1,19 @@
-import { Request, Response, Router } from 'express';
+import {Request, Response, Router} from 'express';
 import Stripe from 'stripe';
 import {getSubscriptionById} from "../service/GeneralSubscriptionService";
 import requireJwt from "../middleware/requireJwt";
-import {createApplication, getApplicationByUserId} from "../service/ApplicationsService";
+import {createApplication, getApplicationByUserId, updateSubscription} from "../service/ApplicationsService";
 import {UserEntity} from "../model/UserEntity";
 import * as process from "node:process";
-const stripeRoute = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2022-11-15' });
+import {getRestrictionBySubscriptionId} from "./handleApplication";
+import {
+    disableByLifeTime,
+    disableByNumUsage,
+    disableBySubscription,
+    disableOneTimeUse
+} from "../service/ApplicationSubscriptionService";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2022-11-15' });
 
 const router = Router();
 
@@ -24,12 +32,17 @@ router.get('/subscription/pay', requireJwt, async (req: Request, res: Response) 
         return res.status(401).json({message: 'Unauthorize'})
     }
     const application = await getApplicationByUserId(user.id);
-    if (application !== undefined) {
+    if (application !== undefined && application.active) {
         return res.status(400).json({message: 'Already have subscription, first cancel it and then buy new subscription. Everything will be linked with this account.'})
     }
 
     if (subscription === undefined) {
         return res.status(400).json({ message: 'Wrong id' });
+    }
+
+    let appString = '';
+    if (application !== undefined) {
+        appString = "curAppId=" + application.id + "&";
     }
 
     if (subscription.price == 0) {
@@ -38,9 +51,9 @@ router.get('/subscription/pay', requireJwt, async (req: Request, res: Response) 
     }
 
     try {
-        const prices = await stripeRoute.prices.list({product: subscription.stripeProductId});
+        const prices = await stripe.prices.list({product: subscription.stripeProductId});
         if (prices.data.length == 1) {
-            const session = await stripeRoute.checkout.sessions.create({
+            const session = await stripe.checkout.sessions.create({
                 line_items: [
                     {
                         price: prices.data.pop()?.id,
@@ -49,7 +62,7 @@ router.get('/subscription/pay', requireJwt, async (req: Request, res: Response) 
                 ],
                 mode: 'subscription',
                 customer_email: user.email,
-                success_url: 'http://localhost:4000/stripe/subscription/success?userId=' + user.id + '&appId=' + subscription.id + '&sessionId={CHECKOUT_SESSION_ID}',
+                success_url: `http://localhost:4000/stripe/subscription/success?userId=${user.id}&${appString}appId=${subscription.id}&sessionId={CHECKOUT_SESSION_ID}`,
                 cancel_url: process.env.FRONTEND_URL,
             });
             return res.status(200).json({url: session.url || ''})
@@ -64,11 +77,31 @@ router.get('/subscription/pay', requireJwt, async (req: Request, res: Response) 
 
 router.get('/subscription/success', async (req: Request, res: Response) => {
     try {
-        const session = await stripeRoute.checkout.sessions.retrieve(req.query.sessionId + '', {expand: ['payment_intent']});
+        const session = await stripe.checkout.sessions.retrieve(req.query.sessionId + '', {expand: ['payment_intent']});
         if (session.status == 'complete') {
             const userId = req.query.userId + '';
             const subscriptionId = req.query.appId + '';
-            await createApplication(userId, subscriptionId, session.id);
+            const curAppId = req.query.curAppId + '';
+            if (curAppId && curAppId.length > 0) {
+                const restriction = await getRestrictionBySubscriptionId(subscriptionId);
+                if (restriction) {
+                    if (restriction.creationTypes.includes('one_time')) {
+                        await disableOneTimeUse(curAppId, false);
+                    }
+                    if (restriction.creationTypes.includes('lifetime')) {
+                        await disableByLifeTime(curAppId, false);
+                    }
+                    if (restriction.creationTypes.includes('usage_limited')) {
+                        await disableByNumUsage(curAppId, false);
+                    }
+                    if (restriction.creationTypes.includes('subscription')) {
+                        await disableBySubscription(curAppId, false);
+                    }
+                }
+                await updateSubscription(userId, curAppId, subscriptionId, session.id);
+            } else {
+                await createApplication(userId, subscriptionId, session.id);
+            }
             return res.redirect(303, process.env.FRONTEND_URL + '/auth/dashboard');
         }
     } catch (error) {
@@ -79,10 +112,18 @@ router.get('/subscription/success', async (req: Request, res: Response) => {
 
 router.get('/subscription/success/:id', async (req: Request, res: Response) => {
     try {
-        const session = await stripeRoute.checkout.sessions.retrieve(req.params.id + '', {expand: ['payment_intent']});
-        const tr = await stripeRoute.balanceTransactions.list({source: "ch_3SK3DnLAO7oNOYUf1RdkIrXe"})
+        const session = await stripe.checkout.sessions.retrieve(req.params.id + '', {expand: ['invoice']});
+        const sub = await stripe.subscriptions.retrieve(session.subscription as string);
+        const bbbb = await stripe.subscriptions.list({
+            customer: session.customer as string,
+            limit: 1
+        });
+        const paymentIntent = await stripe.paymentIntents.retrieve(
+            session.payment_intent as string
+        );
+        const tr = await stripe.balanceTransactions.list({source: "ch_3SPXKgLAO7oNOYUf0CPNevCk"})
         if (session.status == 'complete') {
-            return res.status(200).json({s: session, b: tr});
+            return res.status(200).json({pp: paymentIntent, bb: bbbb, s: session, b: tr, sub: sub});
         }
     } catch (error) {
         return res.status(400).json({ message: 'Invalid payment', error });

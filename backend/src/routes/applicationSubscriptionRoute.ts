@@ -1,20 +1,20 @@
 import {Request, Response, Router} from "express";
 import requireJwt from "../middleware/requireJwt";
-import {getApplicationByUserId, getApplicationByUserIdAndAppId} from "../service/ApplicationsService";
-import {UserEntity} from "../model/UserEntity";
-import {getActiveKeys, getInactiveKeys, getIssuedKeysThisMonth, getRevenue} from "../service/DashboardService";
 import {ApplicationsEntity} from "../model/ApplicationsEntity";
 import {
-    createAppSubscription, deleteAppSubscriptionById,
+    createAppSubscription,
+    deleteAppSubscriptionById,
     getAppSubscriptionById,
-    getAppSubscriptions, hasBoughtSubscription, numberOfAppSubscriptions, swapAppSubscriptionOrder,
-    updateActiveAppSubscription, updateAppSubscription
+    hasBoughtSubscription,
+    numberOfActiveAppSubscriptions,
+    numberOfAppSubscriptions,
+    swapAppSubscriptionOrder,
+    updateActiveAppSubscription,
+    updateAppSubscription
 } from "../service/ApplicationSubscriptionService";
 import {isUUID} from "../service/helper";
-import {handleApplication} from "./dashboardRoute";
 import {ApplicationSubscriptionsEntity} from "../model/ApplicationSubscriptionsEntity";
-import {getRestriction} from "../model/GeneralSubscriptionsType";
-import {getSubscriptionById} from "../service/GeneralSubscriptionService";
+import {getRestrictionByApp, handleApplication} from "./handleApplication";
 
 const router = Router({mergeParams: true});
 
@@ -113,32 +113,20 @@ router.put('/app-subscription/:appSubId/deactivate', requireJwt, async (req: Req
     return handleActivation(req, res, false);
 });
 
-router.put('/app-subscriptions/:appSubId/left', requireJwt,  async (req: Request, res: Response) => {
-    return handleSwap(req, res, true);
-});
-
-router.put('/app-subscriptions/:appSubId/right', requireJwt,  async (req: Request, res: Response) => {
-    return handleSwap(req, res, false);
-});
-
-const handleSwap = async (req: Request, res: Response, left: boolean) => {
+router.put('/app-subscriptions/:appSubId/swap/:otherAppSubId', requireJwt,  async (req: Request, res: Response) => {
     const app = await handleApplication(req);
     if (app == undefined) {
         return res.status(400).json({message: 'Unauthorize'})
     }
-    if (!isUUID(req.params.appSubId)) {
+    if (!isUUID(req.params.appSubId) || !isUUID(req.params.otherAppSubId)) {
         return res.status(400).json({message: 'Invalid Application Subscription Id'})
     }
-    const application = await getAppSubscriptionById(req.params.appSubId, app.id);
-    if (application == undefined) {
-        return res.status(400).json({message: 'No Application Subscription'})
-    }
-    const swapped = await swapAppSubscriptionOrder(app.id, application.id, application.orderNumber, left);
+    const swapped = await swapAppSubscriptionOrder(app.id, req.params.appSubId, req.params.otherAppSubId);
     if (swapped) {
         return res.status(200).json({message: 'Swapped'});
     }
     return res.status(400).json({message: 'Failed to swap'});
-}
+});
 
 const handleActivation = async (req: Request, res: Response, activate: boolean) => {
     const app = await handleApplication(req);
@@ -147,6 +135,16 @@ const handleActivation = async (req: Request, res: Response, activate: boolean) 
     }
     if (!isUUID(req.params.appSubId)) {
         return res.status(400).json({message: 'Invalid Application Subscription Id'})
+    }
+    const restriction = await getRestrictionByApp(app);
+    if (restriction == undefined) {
+        return res.status(400).json({message: 'No Application'})
+    }
+    if (activate) {
+        const numberOfSubs = await numberOfActiveAppSubscriptions(app.id);
+        if (numberOfSubs >= restriction.numberOfSubscriptions) {
+            return res.status(400).json({message: 'Cannot activate more subscriptions'});
+        }
     }
     const appSub = await getAppSubscriptionById(req.params.appSubId, app.id);
     if (appSub == undefined) {
@@ -160,13 +158,16 @@ const handleActivation = async (req: Request, res: Response, activate: boolean) 
 }
 
 const validateApplication = async (req: Request, app: ApplicationsEntity, create: boolean): Promise<ApplicationSubscriptionsEntity | undefined> => {
-    const generalSub = await getSubscriptionById(app.subscriptionId);
-    if (generalSub == undefined) {
+
+    if (!app.active) {
+        return undefined;
+    }
+    const restriction = await getRestrictionByApp(app);
+    if (restriction == undefined) {
         return undefined;
     }
 
     const numberOfSubs = await numberOfAppSubscriptions(app.id);
-    const restriction = getRestriction(generalSub.type);
     if (create && restriction.numberOfSubscriptions <= numberOfSubs) {
         return undefined;
     }
