@@ -34,8 +34,6 @@ CREATE TABLE IF NOT EXISTS applications (
     stripe_session_id TEXT,
     subscription_id UUID REFERENCES general_subscriptions(id),
     owner_id UUID REFERENCES users(id),
-    active boolean default true,
-    disabled boolean default false,
     expired_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT now()
 );
@@ -55,6 +53,7 @@ CREATE TABLE IF NOT EXISTS application_subscriptions (
     num_usages INTEGER,
     is_lifetime BOOLEAN DEFAULT false,
     created_at TIMESTAMP DEFAULT now()
+    disabled boolean default false,
 );
 
 CREATE TABLE IF NOT EXISTS application_subscription_keys (

@@ -13,7 +13,7 @@ export const getAppSubscriptions = async (appId: string) : Promise<ApplicationSu
 }
 
 export const getAppSubscriptionById = async (id: string, appId: string): Promise<ApplicationSubscriptionsEntity | undefined> => {
-    const result: QueryArrayResult = await db.query("select * from application_subscriptions where id = $1 and application_id = $2", [id, appId]);
+    const result: QueryArrayResult = await db.query("select * from application_subscriptions where id = $1 and application_id = $2 and disabled = false", [id, appId]);
     const subs = emptyOrRows(result.rows);
     if (subs.length !== 1) {
         return undefined;

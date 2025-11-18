@@ -3,6 +3,7 @@ export interface UserEntity {
     email: string;
     name: string;
     googleId: string;
+    stripeAccountId?: string;
     applicationId?: string;
     applicationSubscriptionIds: {id: string, name: string}[];
 }

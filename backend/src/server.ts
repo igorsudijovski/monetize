@@ -15,6 +15,7 @@ import applicationRoute from "./routes/applicationRoute";
 import dashboardRoute from "./routes/dashboardRoute";
 import applicationSubscriptionRoute from "./routes/applicationSubscriptionRoute";
 import stripeHandelingRoute from "./routes/stripeHandelingRoute";
+import endUserRoute from "./routes/endUserRoute";
 
 const app = express();
 const FRONTEND = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -40,6 +41,8 @@ app.use('/api', applicationRoute)
 app.use('/stripe', stripeRoute);
 
 app.use('/api', stripeHandelingRoute);
+
+app.use('/user', endUserRoute);
 
 app.use('/general', generalSubscriptionRoute)
 

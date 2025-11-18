@@ -15,6 +15,9 @@ import {
 import {isUUID} from "../service/helper";
 import {ApplicationSubscriptionsEntity} from "../model/ApplicationSubscriptionsEntity";
 import {getRestrictionByApp, handleApplication} from "./handleApplication";
+import {UserEntity} from "../model/UserEntity";
+import {createStripeCustomer} from "../service/StripeService";
+import {updateUserStripeAccountId} from "../service/UserService";
 
 const router = Router({mergeParams: true});
 
@@ -27,6 +30,13 @@ router.post('/app-subscription', requireJwt,  async (req: Request, res: Response
     if (entity == undefined) {
         return res.status(400).json({message: 'Invalid Application Subscription'})
     }
+    const user = req.user as UserEntity;
+    if (user.stripeAccountId == null || user.stripeAccountId.trim().length === 0) {
+        const stripeId = await createStripeCustomer(user.email);
+        await updateUserStripeAccountId(user.id, stripeId);
+        user.stripeAccountId = stripeId;
+    }
+
     const created = await createAppSubscription(app.id, entity);
     return res.status(200).json({applicationSubscription: created});
 })

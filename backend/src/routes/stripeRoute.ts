@@ -81,7 +81,7 @@ router.get('/subscription/success', async (req: Request, res: Response) => {
         if (session.status == 'complete') {
             const userId = req.query.userId + '';
             const subscriptionId = req.query.appId + '';
-            const curAppId = req.query.curAppId + '';
+            const curAppId = req.query.curAppId ? req.query.curAppId + '' : undefined;
             if (curAppId && curAppId.length > 0) {
                 const restriction = await getRestrictionBySubscriptionId(subscriptionId);
                 if (restriction) {

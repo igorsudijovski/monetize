@@ -4,7 +4,6 @@ import {getApplicationByUserId, updateApplication} from "../service/Applications
 import {UserEntity} from "../model/UserEntity";
 import {getRestriction} from "../model/GeneralSubscriptionsType";
 import {getSubscriptionById} from "../service/GeneralSubscriptionService";
-import {ApplicationSubscriptionsEntity} from "../model/ApplicationSubscriptionsEntity";
 import {ApplicationsEntity} from "../model/ApplicationsEntity";
 
 const router = Router();

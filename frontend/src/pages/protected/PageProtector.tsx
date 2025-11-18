@@ -10,6 +10,7 @@ import EditAppSubscription from "./EditAppSubscription";
 import CreateAppSubscription from "./CreateAppSubscription";
 import MySubscription from "./MySubscription";
 import {UserEntity} from "@backend/UserEntity";
+import NavbarAdmin from "../../components/NavbarAdmin";
 
 export default function PageProtector() {
 
@@ -17,8 +18,8 @@ export default function PageProtector() {
     const [app, setApp] = React.useState<ApplicationsEntity | null>(null);
     const [searchParams, setSearchParams] = useSearchParams();
     const [restriction, setRestriction] = React.useState<Restriction | null>(null);
-    const { isLoggedIn } = useContext(AuthContext);
-    const { axios } = useContext(AxiosContext);
+    const {isLoggedIn} = useContext(AuthContext);
+    const {axios} = useContext(AxiosContext);
     const [loading, setLoading] = React.useState<boolean>(false);
     const navigate = useNavigate();
 
@@ -52,13 +53,15 @@ export default function PageProtector() {
     }, [isLoggedIn, searchParams]);
 
     return (
-        isLoggedIn ? (
-        <Routes>
-            <Route path='/logout' element={<Logout/>}/>
-            <Route path='/dashboard' element={<Dashboard loading={loading} app={app} restriction={restriction}/>}/>
-            <Route path='/subscription' element={<MySubscription user={user} app={app} restriction={restriction}/>}/>
-            <Route path='/sub/edit/:appId' element={<EditAppSubscription app={app} restriction={restriction}/>}/>
-            <Route path='/sub/create' element={<CreateAppSubscription app={app} restriction={restriction}/>}/>
-        </Routes> ) : <></>
+        isLoggedIn ? (<>
+            <NavbarAdmin user={user}/>
+            <Routes>
+                <Route path='/logout' element={<Logout/>}/>
+                <Route path='/dashboard' element={<Dashboard loading={loading} app={app} restriction={restriction}/>}/>
+                <Route path='/subscription'
+                       element={<MySubscription user={user} app={app} restriction={restriction}/>}/>
+                <Route path='/sub/edit/:appId' element={<EditAppSubscription app={app} restriction={restriction}/>}/>
+                <Route path='/sub/create' element={<CreateAppSubscription app={app} restriction={restriction}/>}/>
+            </Routes> </>) : <></>
     )
 }

@@ -4,11 +4,17 @@ import {QueryArrayResult} from "pg";
 import {camelize, emptyOrRows} from "./helper";
 
 export const getUserById = async (id: string): Promise<UserEntity | undefined> => {
-    const result: QueryArrayResult = await db.query("select id, email, name, google_id from users where id = $1", [id]);
+    const result: QueryArrayResult = await db.query("select * from users where id = $1", [id]);
     if (result.rowCount !== 1) {
         return undefined;
     }
     return mapUser(result);
+}
+
+export const updateUserStripeAccountId = async (userId: string, stripeAccountId: string): Promise<boolean> => {
+    const result: QueryArrayResult = await db.query("update users set stripe_account_id = $1 where id = $2 returning id", [stripeAccountId, userId]);
+    const users = emptyOrRows(result.rows);
+    return users.length === 1;
 }
 
 export const createUser = async (user: UserEntity): Promise<UserEntity> => {
@@ -20,7 +26,7 @@ export const createUser = async (user: UserEntity): Promise<UserEntity> => {
 }
 
 export const getUserByGoogleId = async (googleId: string): Promise<UserEntity | undefined> => {
-    const result: QueryArrayResult = await db.query("select id, email, name, google_id from users where google_id = $1", [googleId]);
+    const result: QueryArrayResult = await db.query("select * from users where google_id = $1", [googleId]);
     if (result.rowCount !== 1) {
         return undefined;
     }

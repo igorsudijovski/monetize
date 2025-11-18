@@ -4,6 +4,7 @@ import SubscriptionCard from "../components/SubscriptionCard";
 import {AxiosContext} from "../api/axiosInstance";
 import {GeneralSubscriptionsEntity} from "@backend/GeneralSubscriptionsEntity";
 import {mapToSubscriptionCard} from "../model/GeneralSubscriptions";
+import Navbar from "../components/Navbar";
 
 
 export default function Home({showTopBar = true}: { showTopBar?: boolean }) {
@@ -18,6 +19,8 @@ export default function Home({showTopBar = true}: { showTopBar?: boolean }) {
     }, []);
 
     return (
+        <>
+            <Navbar />
         <Container sx={{ mt: 6, mb: 6 }}>
             {showTopBar && (<Typography variant="h4" sx={{ fontWeight: "bold", mb: 4 }}>
                 Available Subscriptions
@@ -35,5 +38,6 @@ export default function Home({showTopBar = true}: { showTopBar?: boolean }) {
                 ))}
             </Grid>
         </Container>
+        </>
     );
 }
