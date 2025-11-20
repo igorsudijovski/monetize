@@ -57,7 +57,7 @@ export default function PageProtector() {
             <NavbarAdmin user={user}/>
             <Routes>
                 <Route path='/logout' element={<Logout/>}/>
-                <Route path='/dashboard' element={<Dashboard loading={loading} app={app} restriction={restriction}/>}/>
+                <Route path='/dashboard' element={<Dashboard loading={loading} user={user} app={app} restriction={restriction}/>}/>
                 <Route path='/subscription'
                        element={<MySubscription user={user} app={app} restriction={restriction}/>}/>
                 <Route path='/sub/edit/:appId' element={<EditAppSubscription app={app} restriction={restriction}/>}/>

@@ -32,10 +32,12 @@ import {mapToSubscriptionCardApp} from "../../model/GeneralSubscriptions";
 import {Link as RouterLink, useNavigate} from "react-router-dom";
 import SubscriptionDragGrid from "../../components/SubscriptionDragGrid";
 import Home from "../Home";
+import {UserEntity} from "@backend/UserEntity";
 
-export default function Dashboard({loading, app, restriction}: {
+export default function Dashboard({loading, app, user, restriction}: {
     loading: boolean,
     app: ApplicationsEntity | null,
+    user: UserEntity | null,
     restriction: Restriction | null
 }) {
 
@@ -160,6 +162,26 @@ export default function Dashboard({loading, app, restriction}: {
         });
     }
 
+    const onBoarding = () => {
+        if (user) {
+            if (user.onboardComplete) {
+                axios.get('api/connect-url', {withCredentials: true}).then(response => {
+                    window.open(response.data.url, '_blank');
+                }).catch(error => {
+                    setSnackbar({open: true, severity: "error", message: "Failed to get connect URL"});
+                    console.error('Error getting connect URL:', error);
+                });
+            } else {
+                axios.get('api/onboarding', {withCredentials: true}).then(response => {
+                    window.location.href = response.data.url;
+                }).catch(error => {
+                    setSnackbar({open: true, severity: "error", message: "Failed to start onboarding process"});
+                    console.error('Error starting onboarding process:', error);
+                });
+            }
+        }
+    }
+
     return (
         <Box sx={{p: 4}}>
             <Typography variant="h4" sx={{mb: 3, fontWeight: "bold"}}>
@@ -206,11 +228,11 @@ export default function Dashboard({loading, app, restriction}: {
 
                                 <Stack direction="row" spacing={1}>
                                     <Button
-                                        disabled={totalRevenue() === 0}
                                         variant="outlined"
                                         startIcon={<AccountBalanceWalletIcon/>}
+                                        onClick={onBoarding}
                                     >
-                                        Start Withdraw Process
+                                        {user?.onboardComplete ? 'See earnings' : 'Start onboarding process' }
                                     </Button>
                                 </Stack>
                             </Card>

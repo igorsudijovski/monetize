@@ -61,6 +61,8 @@ router.get('/subscription/pay', requireJwt, async (req: Request, res: Response) 
                     },
                 ],
                 mode: 'subscription',
+                tax_id_collection: {enabled: true},
+                automatic_tax: {enabled: true},
                 customer_email: user.email,
                 success_url: `http://localhost:4000/stripe/subscription/success?userId=${user.id}&${appString}appId=${subscription.id}&sessionId={CHECKOUT_SESSION_ID}`,
                 cancel_url: process.env.FRONTEND_URL,

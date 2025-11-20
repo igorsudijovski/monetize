@@ -4,6 +4,8 @@ export interface ApplicationSubscriptionsEntity {
     description?: string;
     bulletText: string[];
     price: number,
+    stripePriceId?: string,
+    stripeProductId?: string,
     currency: string,
     active: boolean,
     orderNumber: number,

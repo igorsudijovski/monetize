@@ -53,6 +53,8 @@ export const createStripePayment = async (price: number, fee: number, accountId:
                 },
                 application_fee_amount: fee,
             },
+            automatic_tax: {enabled: true},
+            tax_id_collection: {enabled: true},
             success_url: `http://localhost:4000/user/app/${appId}/buy/${appSubId}/success?keyId=${keyId}&session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: `${process.env.FRONTEND_URL}/app/${appUrl}`,
             metadata: {productId: appSubId, keyId: keyId}
@@ -65,15 +67,51 @@ export const createStripePayment = async (price: number, fee: number, accountId:
 
 }
 
-export const onBoarding = async (accountId: string): Promise<string> => {
+export const onBoarding = async (accountId: string, userId: string): Promise<string> => {
     const accountLink = await stripe.accountLinks.create({
         account: accountId,
-        refresh_url: 'http://localhost:4000/user/onboarding',
-        return_url: 'http://localhost:4000/user/onboarding/success',
+        refresh_url: 'http://localhost:4000/api/onboarding',
+        return_url: `http://localhost:4000/api/onboarding/success?accountId=${accountId}&userId=${userId}`,
         type: 'account_onboarding',
     });
     return accountLink.url || '';
 }
+
+export const createSubscription = async(price: number, numberOfDays: number, name: string): Promise<{priceId: string, productId: string} | null> => {
+    try {
+        const product = await stripe.products.create({
+            name: name,
+        });
+
+        const prices = await stripe.prices.create({
+            unit_amount: price,
+            currency: 'eur',
+            recurring: {interval: 'day', interval_count: numberOfDays},
+            product: product.id,
+        });
+        return {priceId: prices.id, productId: product.id};
+    } catch (error) {
+        console.error('Error creating Stripe subscription:', error);
+    }
+    return null;
+}
+
+export const changeProductName = async(productId: string, newName: string): Promise<void> => {
+    await stripe.products.update(productId, {
+        name: newName,
+    });
+}
+
+export const deleteProduct = async(productId: string, priceId: string): Promise<void> => {
+    await stripe.prices.update(priceId, {
+        active: false,
+    });
+    await stripe.products.update(productId, {
+        active: false,
+    });
+}
+
+
 
 // 👇 marketplace payout setup
 // payment_intent_data: {

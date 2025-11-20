@@ -63,7 +63,7 @@ export const getInactiveKeys = async (appId: string, page: number, limit: number
 }
 
 const getKeys = async (whereClause: string, appId: string, page: number, limit: number, subscriptionId: string | undefined, searchStr: string | undefined, desc = true): Promise<PaginationModel<DashboardKeysEntity>> => {
-    let selectQuery = "select k.id, k.key, k.num_usages, k.active, k.expires_at, k.last_used_at, k.created_at, apps.name ";
+    let selectQuery = "select k.id, k.app_key, k.num_usages, k.active, k.expires_at, k.last_used_at, k.created_at, apps.name ";
     let query = " from application_subscription_keys as k left join application_subscriptions as apps on k.application_subscription_id = apps.id ";
     query += " where " + whereClause + " and apps.application_id = $1 ";
     const params: any[] = [appId];
@@ -74,7 +74,7 @@ const getKeys = async (whereClause: string, appId: string, page: number, limit: 
         params.push(subscriptionId);
     }
     if (searchStr !== undefined) {
-        query += " and k.key like $" + index + " ";
+        query += " and k.app_key like $" + index + " ";
         index++;
         params.push(`%${searchStr}%`);
     }

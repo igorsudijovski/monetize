@@ -2,6 +2,7 @@ export interface ApplicationsEntity {
     id: string;
     name: string;
     redirectUrl: string;
+    urlName: string,
     clientId: string,
     clientSecret: string,
     fontColor: string,

@@ -22,6 +22,7 @@ async function verify(accessToken: string, refreshToken: string, profile: Profil
                 name: name,
                 googleId: profile.id,
                 applicationSubscriptionIds: [],
+                onboardComplete: false
             });
         }
         return done(null, {userId: user.id});

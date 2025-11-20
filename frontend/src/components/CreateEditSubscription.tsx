@@ -80,7 +80,7 @@ export default function CreateEditSubscription({ initialData, onSave, onCancel, 
         setSubscriptionCardProps(mapper());
         if (name == "" || price == 0 || isNaN(Number(price))) {
             setDisabled(true);
-        } else if (type === "subscription" && (days == "" || days == "0" || isNaN(Number(days)))) {
+        } else if (type === "subscription" && (days == "" || days == "0" || isNaN(Number(days)) || Number(days) < 20 || Number(days) > 300)) {
             setDisabled(true);
         } else if (type === "usage_limited" && (usageLimit == "" || usageLimit == "0" || isNaN(Number(usageLimit)))) {
             setDisabled(true);
@@ -203,6 +203,7 @@ export default function CreateEditSubscription({ initialData, onSave, onCancel, 
 
                         <TextField
                             fullWidth
+                            disabled={initialData !== null && type === "subscription"}
                             label={`Price between ${restriction.priceLow} and ${restriction.priceHigh}`}
                             type="number"
                             sx={{ mb: 2 }}
@@ -225,7 +226,7 @@ export default function CreateEditSubscription({ initialData, onSave, onCancel, 
                             <TextField
                                 fullWidth
                                 disabled={initialData !== null}
-                                label="Number of Days"
+                                label="Number of Days between 20 and 400"
                                 type="number"
                                 sx={{ mb: 2 }}
                                 value={days}

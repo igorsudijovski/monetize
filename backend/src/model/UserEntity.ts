@@ -6,4 +6,5 @@ export interface UserEntity {
     stripeAccountId?: string;
     applicationId?: string;
     applicationSubscriptionIds: {id: string, name: string}[];
+    onboardComplete: boolean;
 }

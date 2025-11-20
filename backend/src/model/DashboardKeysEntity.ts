@@ -1,6 +1,6 @@
 export interface DashboardKeysEntity {
     id: string;
-    key: string;
+    appKey: string;
     numUsages: string;
     active: string,
     expiresAt: Date,

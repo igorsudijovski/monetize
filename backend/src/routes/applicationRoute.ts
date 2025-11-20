@@ -8,6 +8,7 @@ import {ApplicationsEntity} from "../model/ApplicationsEntity";
 
 const router = Router();
 
+
 router.get('/my-subscription', requireJwt,  async (req: Request, res: Response) => {
     const user = req.user as UserEntity;
     if (user == undefined) {

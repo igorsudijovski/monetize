@@ -17,6 +17,12 @@ export const updateUserStripeAccountId = async (userId: string, stripeAccountId:
     return users.length === 1;
 }
 
+export const updateOnboardedUser = async (userId: string): Promise<boolean> => {
+    const result: QueryArrayResult = await db.query("update users set onboard_complete = true where id = $1 returning id", [userId]);
+    const users = emptyOrRows(result.rows);
+    return users.length === 1;
+}
+
 export const createUser = async (user: UserEntity): Promise<UserEntity> => {
     const result: QueryArrayResult = await db.query(
         "insert into users(email, name, google_id) values ($1, $2, $3) returning id, email, name, google_id",

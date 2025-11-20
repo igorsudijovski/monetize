@@ -56,8 +56,8 @@ export const updateActiveAppSubscription = async (id: string, active: boolean): 
 
 export const createAppSubscription = async (appId: string, appSub: ApplicationSubscriptionsEntity): Promise<ApplicationSubscriptionsEntity> => {
     const orderNumber = await getNextOrderNumber(appId);
-    const result: QueryArrayResult = await db.query("insert into application_subscriptions (name, description, list_text, price, currency, application_id, order_number, one_time_use, num_days, num_usages, is_lifetime, created_at) " +
-        " values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, now()) returning id", [
+    const result: QueryArrayResult = await db.query("insert into application_subscriptions (name, description, list_text, price, currency, application_id, order_number, one_time_use, num_days, num_usages, is_lifetime, stripe_product_id, stripe_price_id, created_at) " +
+        " values ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, now()) returning id", [
         appSub.name,
         appSub.description,
         appSub.bulletText ? appSub.bulletText.join("\\n") : null,
@@ -68,7 +68,9 @@ export const createAppSubscription = async (appId: string, appSub: ApplicationSu
         appSub.oneTimeUse,
         appSub.numDays,
         appSub.numUsages,
-        appSub.isLifetime
+        appSub.isLifetime,
+        appSub.stripeProductId,
+        appSub.stripePriceId
     ]);
     const subs = emptyOrRows(result.rows);
     if (subs.length !== 1) {

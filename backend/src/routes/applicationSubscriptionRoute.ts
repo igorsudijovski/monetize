@@ -16,7 +16,7 @@ import {isUUID} from "../service/helper";
 import {ApplicationSubscriptionsEntity} from "../model/ApplicationSubscriptionsEntity";
 import {getRestrictionByApp, handleApplication} from "./handleApplication";
 import {UserEntity} from "../model/UserEntity";
-import {createStripeCustomer} from "../service/StripeService";
+import {changeProductName, createStripeCustomer, createSubscription, deleteProduct} from "../service/StripeService";
 import {updateUserStripeAccountId} from "../service/UserService";
 
 const router = Router({mergeParams: true});
@@ -37,6 +37,14 @@ router.post('/app-subscription', requireJwt,  async (req: Request, res: Response
         user.stripeAccountId = stripeId;
     }
 
+    if (entity.numDays !== undefined && entity.numDays > 0) {
+        const data =  await createSubscription(entity.price * 100, entity.numDays, entity.name);
+        if (data == null) {
+            return res.status(400).json({message: 'Failed to create subscription in Stripe'});
+        }
+        entity.stripePriceId = data.priceId;
+        entity.stripeProductId = data.productId;
+    }
     const created = await createAppSubscription(app.id, entity);
     return res.status(200).json({applicationSubscription: created});
 })
@@ -84,6 +92,9 @@ router.delete('/app-subscription/:appSubId', requireJwt,  async (req: Request, r
     if (application == undefined) {
         return res.status(400).json({message: 'No Application Subscription'})
     }
+    if (application.stripePriceId !== undefined && application.stripeProductId !== undefined) {
+        await deleteProduct(application.stripeProductId, application.stripePriceId);
+    }
     await deleteAppSubscriptionById(application.id, app.id);
     return res.status(204).send();
 })
@@ -103,6 +114,12 @@ router.put('/app-subscription/:appSubId', requireJwt,  async (req: Request, res:
     const application = await getAppSubscriptionById(req.params.appSubId, app.id);
     if (application == undefined) {
         return res.status(400).json({message: 'No Application Subscription'})
+    }
+    if (application.numDays !== undefined && application.numDays > 0) {
+        entity.price = application.price;
+    }
+    if (application.stripeProductId !== undefined) {
+        await changeProductName(application.stripeProductId, entity.name);
     }
     const created = await updateAppSubscription(application.id, entity);
     if (created == undefined || !created) {
@@ -205,6 +222,9 @@ const validateApplication = async (req: Request, app: ApplicationsEntity, create
             return undefined;
         }
         if (entity.numDays !== undefined && entity.numDays > 0 && !restriction.creationTypes.includes('subscription')) {
+            return undefined;
+        }
+        if (entity.numDays !== undefined && entity.numDays < 20 && entity.numDays > 300) {
             return undefined;
         }
         return entity;

@@ -40,9 +40,17 @@ export const getApplicationAppId = async (id: string): Promise<ApplicationsEntit
 
 export const createApplication = async (userId: string, subscriptionId: string, stripeSessionId: string | null): Promise<string> => {
     const clientId = uuidv4();
+    let urlName = `app-${clientId}`;
+    let exists = await isUrlNameExists(urlName);
+    let counter = 1;
+    while (exists) {
+        urlName = urlName + counter;
+        exists = await isUrlNameExists(urlName);
+        counter++;
+    }
     const clientSecret = generateRandomString(MAX_CLIENT_SECRET_LENGTH, clientId);
-    const result: QueryArrayResult = await db.query("insert into applications(name, client_id, client_secret, subscription_id, stripe_session_id, owner_id, expired_at) values" +
-        " ($1, $2, $3, $4, $5, $6, current_date + interval '33 days') returning id", [clientId, clientId, clientSecret, subscriptionId, stripeSessionId, userId]);
+    const result: QueryArrayResult = await db.query("insert into applications(name, client_id, url_name, client_secret, subscription_id, stripe_session_id, owner_id, expired_at) values" +
+        " ($1, $2, $3, $4, $5, $6, $7, current_date + interval '33 days') returning id", [clientId, clientId, urlName, clientSecret, subscriptionId, stripeSessionId, userId]);
     const app = emptyOrRows(result.rows);
     return app[0].id as string;
 }
@@ -60,6 +68,12 @@ export const disableApplicationById = async (id: string): Promise<boolean> => {
     const result: QueryArrayResult = await db.query("update applications set expired_at = now() where id = $1 returning id", [id]);
     const subs = emptyOrRows(result.rows);
     return subs.length === 1;
+}
+
+export const isUrlNameExists = async (urlName: string): Promise<boolean> => {
+    const result: QueryArrayResult = await db.query("select id from applications where url_name = $1", [urlName]);
+    const subs = emptyOrRows(result.rows);
+    return subs.length > 0;
 }
 
 const mapApplication = (sub: any): ApplicationsEntity => {

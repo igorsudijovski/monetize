@@ -1,11 +1,11 @@
 import {Request, Response, Router} from "express";
 import {getAppSubscriptionById, getAppSubscriptions} from "../service/ApplicationSubscriptionService";
 import {isUUID} from "../service/helper";
-import {createStripePayment, onBoarding} from "../service/StripeService";
+import {createStripePayment} from "../service/StripeService";
 import {getUserById} from "../service/UserService";
 import {getApplicationAppId} from "../service/ApplicationsService";
 import {getSubscriptionById} from "../service/GeneralSubscriptionService";
-import {createNewAppKey, updateAppKeyActive} from "../service/KeyService";
+import {createNewAppKey} from "../service/KeyService";
 import Stripe from "stripe";
 import process from "node:process";
 
@@ -63,16 +63,6 @@ router.get('/app/:appId/buy/:subscriptionId',  async (req: Request, res: Respons
     const url = await createStripePayment(appSub.price * 100, fee, stripeAccount, appSub.currency, app.id, key, app.name + ': ' + appSub.name, appSub.id, app.id);
     return res.status(200).json({url: url});
 });
-
-router.get("/onboarding", async (req: Request, res: Response) => {
-    const url = await onBoarding('acct_1STks9LpjZZ5katJ');
-    return res.status(200).json({url: url});
-})
-router.get("/onboarding/success", async (req: Request, res: Response) => {
-    return res.status(200).json({message: 'Onboarding successful. You can close this window now.'});
-})
-
-
 
 router.get('/app/:appId/buy/:subscriptionId/success', async (req: Request, res: Response) => {
     const sessionId = req.query.session_id + '';
