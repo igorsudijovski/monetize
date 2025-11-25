@@ -118,7 +118,7 @@ router.put('/app-subscription/:appSubId', requireJwt,  async (req: Request, res:
     if (application.numDays !== undefined && application.numDays > 0) {
         entity.price = application.price;
     }
-    if (application.stripeProductId !== undefined) {
+    if (application.stripeProductId !== undefined && application.stripeProductId !== null && application.stripeProductId.trim().length > 0) {
         await changeProductName(application.stripeProductId, entity.name);
     }
     const created = await updateAppSubscription(application.id, entity);

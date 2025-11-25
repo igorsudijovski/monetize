@@ -12,8 +12,8 @@ export default function UserParent() {
     const [subs, setSubs] = useState<ApplicationSubscriptionsEntity[]>([]);
 
     useEffect(() => {
-        if (params.appId) {
-            axios.get(`/user/app/${params.appId}`)
+        if (params.urlName) {
+            axios.get(`/user/app/${params.urlName}`)
                 .then(response => {
                     setAppData(response.data.app);
                     setSubs(response.data.subs);

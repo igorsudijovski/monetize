@@ -19,12 +19,14 @@ export default function SubscriptionCard({
                                              description,
                                              price,
                                              active,
+                                             applicationId,
                                              items = [],
                                              type = "one_time",
                                              days,
                                              usageLimit,
                                              showAdminActions = false,
                                              adminSide = false,
+                                             subsType,
                                              onBuy,
                                              onEdit,
                                              onActivate,
@@ -32,7 +34,7 @@ export default function SubscriptionCard({
                                              noButtons = false,
                                              isFirst,
                                              isLast,
-                                             move
+                                             move,
                                          }: SubscriptionCardProps) {
     const {isLoggedIn} = useContext(AuthContext);
 
@@ -64,6 +66,62 @@ export default function SubscriptionCard({
         }
     };
 
+    const getApplicationSubsButtons = () => {
+        if (subsType == 'application') {
+            if (adminSide) {
+                return (<Button color="primary" variant="contained" onClick={onBuy}>
+                    {type !== 'subscription' ? 'Buy' : 'Subscribe'}
+                </Button>);
+            }
+
+            if (type !== 'subscription') {
+                return (<Link
+                    href={`http://localhost:4000/user/app/${applicationId}/buy/${id}`}>
+                    <Button color="primary" variant="contained">
+                        Buy
+                    </Button>
+                </Link>);
+            }
+            if (isLoggedIn) {
+                return (<Link
+                    href={`/login-redirect?subId=${id}&refresh=true&type=endUser&appId=${applicationId}`}>
+                    <Button color="primary" variant="contained">
+                        Subscribe
+                    </Button>
+                </Link>);
+            }
+            return (<Link
+                href={`http://localhost:4000/auth/google?appId=${id}&type=endUser&subId=${applicationId}`}>
+                <Button color="primary" variant="contained">
+                    Login & Subscribe
+                </Button>
+            </Link>)
+        }
+        return null;
+    }
+    const getGeneralSubsButtons = () => {
+        if (subsType == 'general') {
+            if (adminSide) {
+                return null;
+            }
+            if (isLoggedIn) {
+                return (<Link
+                    href={`/login-redirect?appId=${id}&refresh=true&type=client`}>
+                    <Button color="primary" variant="contained">
+                        Subscribe
+                    </Button>
+                </Link>);
+            }
+            return (<Link
+                href={`http://localhost:4000/auth/google?appId=${id}&type=client`}>
+                <Button color="primary" variant="contained">
+                    Login & Subscribe
+                </Button>
+            </Link>)
+        }
+        return null;
+    }
+
     return shouldShowComponent() && (
         <Card
             variant="outlined"
@@ -79,11 +137,13 @@ export default function SubscriptionCard({
         >
             {showAdminActions &&
                 (<Box sx={{mt: 1, display: "flex", justifyContent: "center", gap: 1, pb: 2, width: 1}}>
-                    <IconButton size="medium" sx={{width: 0.5, "&:hover": {backgroundColor: "transparent"}}} disabled={isFirst == true} onClick={() => move && move("left")}>
+                    <IconButton size="medium" sx={{width: 0.5, "&:hover": {backgroundColor: "transparent"}}}
+                                disabled={isFirst == true} onClick={() => move && move("left")}>
                         {isFirst !== true && (<ArrowBackIosNewIcon fontSize="medium"/>)}
                     </IconButton>
 
-                    <IconButton size="medium"  sx={{width: 0.5, "&:hover": {backgroundColor: "transparent"}}} disabled={isLast == true } onClick={() => move && move("right")}>
+                    <IconButton size="medium" sx={{width: 0.5, "&:hover": {backgroundColor: "transparent"}}}
+                                disabled={isLast == true} onClick={() => move && move("right")}>
                         {isLast !== true && (<ArrowForwardIosIcon fontSize="medium"/>)}
                     </IconButton>
                 </Box>)}
@@ -140,39 +200,24 @@ export default function SubscriptionCard({
 
             {(noButtons === undefined || !noButtons) &&
                 (<Box sx={{p: 2}}>
-                {showAdminActions && (
-                    <Stack direction="row" spacing={1}>
-                        <Button variant="text" size="small" color="warning" onClick={onEdit}>
-                            Edit
-                        </Button>
-                        {active && (<Button variant="text" size="small" color="error" onClick={onDeactivate}>
-                            Deactivate
-                        </Button>)}
-                        {!active && (<Button variant="text" size="small" color="error" onClick={onActivate}>
-                            Activate
-                        </Button>)}
-                    </Stack>
-                )}
-                {!showAdminActions && (<Stack direction="row-reverse" spacing={1}>
-                    {adminSide ? (
-                            <Button color="primary" variant="contained" onClick={onBuy}>
-                                {price === 0 ? 'Subscribe' : 'Buy'}
-                            </Button>) :
-                        (isLoggedIn ? (
-                            <Link href={`/login-redirect?appId=${id}&refresh=true`}>
-                                <Button color="primary" variant="contained">
-                                    {price === 0 ? 'Subscribe' : 'Buy'}
-                                </Button>
-                            </Link>
-                        ) : (
-                            <Link href={`http://localhost:4000/auth/google?appId=${id}`}>
-                                <Button color="primary" variant="contained">
-                                    {price === 0 ? 'Login' : 'Login & Buy'}
-                                </Button>
-                            </Link>
-                        ))}
-                </Stack>)}
-            </Box>)}
+                    {showAdminActions && (
+                        <Stack direction="row" spacing={1}>
+                            <Button variant="text" size="small" color="warning" onClick={onEdit}>
+                                Edit
+                            </Button>
+                            {active && (<Button variant="text" size="small" color="error" onClick={onDeactivate}>
+                                Deactivate
+                            </Button>)}
+                            {!active && (<Button variant="text" size="small" color="error" onClick={onActivate}>
+                                Activate
+                            </Button>)}
+                        </Stack>
+                    )}
+                    {!showAdminActions && (<Stack direction="row-reverse" spacing={1}>
+                        {getApplicationSubsButtons()}
+                        {getGeneralSubsButtons()}
+                    </Stack>)}
+                </Box>)}
         </Card>
     );
 }

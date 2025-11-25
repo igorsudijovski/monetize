@@ -2,6 +2,7 @@
 import {Request, Response, Router} from 'express';
 import passport from '../auth/passportConfig'; // import passport from our custom passport file
 import {generateRefresh} from "../auth/KeysService";
+import {getUserById} from "../service/UserService";
 
 const router = Router();
 
@@ -14,7 +15,7 @@ const router = Router();
 router.get('/google', function(req, response) {
     passport.authenticate('google', {
         scope: ['profile', 'email'],
-        state: req.query.appId + ''
+        state: `appId=${req.query.appId}&type=${req.query.type}&subId=${req.query.subId}`
     })(req, response);
 });
 
@@ -26,19 +27,46 @@ router.get('/google', function(req, response) {
   the access token generation and redirect the user to the frontend.
 */
 // Google OAuth2.0 callback route
-router.get('/google/callback', passport.authenticate('google', { session: false }), (req: Request, res: Response) => {
+router.get('/google/callback', passport.authenticate('google', { session: false }), async (req: Request, res: Response) => {
     try {
         // we can use req.user because the GoogleStrategy that we've
         // implemented in `google.ts` attaches the user
-        const user = req.user as {userId: string} | undefined;
+        const userId = req.user as {userId: string} | undefined;
 
-        if (!user) {
+        if (!userId) {
             return res.status(401).json({ message: 'Authentication failed: user not found' });
         }
+        const user = await getUserById(userId.userId);
+        if (user === undefined) {
+            return res.status(401).json({ message: 'Authentication failed: user not found' });
+        }
+        const urlParams = [];
+        if (req.query.state !== undefined) {
+            const params = new URLSearchParams(req.query.state as string);
+            const appId = params.get('appId') || '';
+            if (!(appId === 'undefined' || appId === 'null')) {
+                urlParams.push(`appId=${appId}`);
+            }
+            const type = params.get('type') || '';
+            if (!(type === 'undefined' || type === 'null')) {
+                urlParams.push(`type=${type}`);
+            }
+            const subId = params.get('subId') || '';
+            if (!(subId === 'undefined' || subId === 'null')) {
+                urlParams.push(`subId=${subId}`);
+            }
+        }
 
-        const appId = req.query.state !== 'undefined' ? '?appId=' + req.query.state : '';
+        if (user.applicationSubscriptionIds !== undefined && user.applicationSubscriptionIds.length > 0) {
+            urlParams.push(`redirect=user`);
+        }
 
-        const refreshToken = generateRefresh(user.userId);
+        if (user.applicationId !== undefined && user.applicationId !== null) {
+            urlParams.push(`redirect=dashboard`);
+        }
+
+        const refreshToken = generateRefresh(user.id);
+
 
 
         res.cookie('refreshToken', refreshToken, {
@@ -46,7 +74,8 @@ router.get('/google/callback', passport.authenticate('google', { session: false 
             secure: true,
             maxAge: 24 * 60 * 60 * 1000 // 1 day
         });
-        const redirectUrl = process.env.SUCCESSFUL_LOGIN + appId;
+        const urlParamsStr = urlParams.length > 0 ? `?${urlParams.join('&')}` : '';
+        const redirectUrl = process.env.SUCCESSFUL_LOGIN + urlParamsStr;
         return res.redirect(redirectUrl);
     } catch (error) {
         return res.status(500).json({ message: 'An error occurred during authentication', error });

@@ -6,16 +6,17 @@ import {PaginationModel} from "../model/PaginationModel";
 import {DashboardKeysEntity} from "../model/DashboardKeysEntity";
 
 export const getRevenue = async (appId: string): Promise<RevenuePerApp[]> => {
-    const result: QueryArrayResult = await db.query("select app.id, app.name, k.net, k.exchange_rate " +
+    const result: QueryArrayResult = await db.query("select app.id, app.name, k.net, k.exchange_rate, k.id as keyId " +
         "from application_subscriptions as app " +
         "left join application_subscription_keys as k on app.id = k.application_subscription_id " +
-        "where app.application_id = $1", [appId]);
+        "where app.application_id = $1 and k.paid is true", [appId]);
     const revenues = emptyOrRows(result.rows);
     const values: Map<string, RevenuePerApp> = new Map();
     revenues.forEach(revenue => {
         const id: string = revenue.id;
         const name: string = revenue.name;
-        const net: number = revenue.net;
+        const net: number = Number(revenue.net);
+        const key: string | undefined = revenue.keyid;
         const exchangeRate: number = revenue.exchange_rate;
         let amount = -1;
         if (net !== null) {
@@ -37,7 +38,11 @@ export const getRevenue = async (appId: string): Promise<RevenuePerApp[]> => {
         if (!alreadySet) {
             const totalNumber = amount === -1 ? 0 : 1;
             const totalAmount = amount === -1 ? 0 : amount;
-            values.set(id, {subId: id, name, revenue: totalAmount, totalNumber: totalNumber})
+            if (key === null) {
+                values.set(id, {subId: id, name, revenue: 0, totalNumber: 0});
+            } else {
+                values.set(id, {subId: id, name, revenue: totalAmount, totalNumber: totalNumber})
+            }
         }
     })
     return Array.from(values.values());
@@ -46,7 +51,7 @@ export const getIssuedKeysThisMonth = async (appId: string): Promise<number> => 
     const result: QueryArrayResult = await db.query("select count(*) " +
         "from application_subscriptions as app " +
         " left join application_subscription_keys as k on app.id = k.application_subscription_id " +
-        " where app.application_id = $1 and k.created_at >= date_trunc('month', current_date)", [appId]);
+        " where app.application_id = $1 and k.created_at >= date_trunc('month', current_date) and k.paid is true", [appId]);
     const count = emptyOrRows(result.rows);
     if (count.length !== 1) {
         return 0;
@@ -55,17 +60,17 @@ export const getIssuedKeysThisMonth = async (appId: string): Promise<number> => 
 }
 
 export const getActiveKeys = async (appId: string, page: number, limit: number, subscriptionTitle: string | undefined, searchStr: string | undefined, desc = true): Promise<PaginationModel<DashboardKeysEntity>> => {
-    return getKeys("k.active is true and (k.expires_at > now() or k.expires_at is null)", appId, page, limit, subscriptionTitle, searchStr, desc);
+    return getKeys("k.active is true and (k.expires_at > now() or k.expires_at is null)", appId, page, limit, subscriptionTitle, searchStr, desc, true);
 }
 
 export const getInactiveKeys = async (appId: string, page: number, limit: number, subscriptionTitle: string | undefined, searchStr: string | undefined, desc = true): Promise<PaginationModel<DashboardKeysEntity>> => {
-    return getKeys("k.active is false or (k.expires_at <= now())", appId, page, limit, subscriptionTitle, searchStr, desc);
+    return getKeys("k.active is false or (k.expires_at <= now())", appId, page, limit, subscriptionTitle, searchStr, desc, false);
 }
 
-const getKeys = async (whereClause: string, appId: string, page: number, limit: number, subscriptionId: string | undefined, searchStr: string | undefined, desc = true): Promise<PaginationModel<DashboardKeysEntity>> => {
+const getKeys = async (whereClause: string, appId: string, page: number, limit: number, subscriptionId: string | undefined, searchStr: string | undefined, desc = true, active: boolean): Promise<PaginationModel<DashboardKeysEntity>> => {
     let selectQuery = "select k.id, k.app_key, k.num_usages, k.active, k.expires_at, k.last_used_at, k.created_at, apps.name ";
     let query = " from application_subscription_keys as k left join application_subscriptions as apps on k.application_subscription_id = apps.id ";
-    query += " where " + whereClause + " and apps.application_id = $1 ";
+    query += " where (" + whereClause + ") and apps.application_id = $1 and k.paid is true ";
     const params: any[] = [appId];
     let index = 2;
     if (subscriptionId !== undefined) {
@@ -74,9 +79,14 @@ const getKeys = async (whereClause: string, appId: string, page: number, limit: 
         params.push(subscriptionId);
     }
     if (searchStr !== undefined) {
-        query += " and k.app_key like $" + index + " ";
+        if (active) {
+            query += " and (LEFT(LOWER(k.app_key), 4) like $" + index + " OR RIGHT(LOWER(k.app_key), 4) like $" + index + ") ";
+        } else {
+            query += " and LOWER(k.app_key) like $" + index + " ";
+        }
         index++;
-        params.push(`%${searchStr}%`);
+
+        params.push(`%${searchStr.toLowerCase()}%`);
     }
     const queryNoPaging = query;
     const offset = (page - 1) * limit;
@@ -85,7 +95,13 @@ const getKeys = async (whereClause: string, appId: string, page: number, limit: 
     params.push(offset);
     const result: QueryArrayResult = await db.query(selectQuery + query, params);
     const keys = emptyOrRows(result.rows);
-    const mappedKeys: DashboardKeysEntity[] = keys.map((key: any) => camelize<DashboardKeysEntity>(key));
+    const mappedKeys: DashboardKeysEntity[] = keys.map((key: any) => {
+        let mKey = camelize<DashboardKeysEntity>(key);
+        if (active) {
+            mKey.appKey = mKey.appKey.substring(0, 4) + "******" + mKey.appKey.substring(mKey.appKey.length - 4);
+        }
+        return mKey;
+    });
     const countResult: QueryArrayResult = await db.query("select count(*) " + queryNoPaging, params.slice(0, params.length - 2));
     const countRows = emptyOrRows(countResult.rows);
     if (countRows.length !== 1) {

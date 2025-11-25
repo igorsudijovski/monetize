@@ -1,4 +1,3 @@
-import {ApplicationSubscriptionsEntity} from "../model/ApplicationSubscriptionsEntity";
 import {v4 as uuidv4} from "uuid";
 
 export const emptyOrRows = (rows: any): any[] => {
@@ -35,6 +34,12 @@ export const isUUID = (str: string | undefined): boolean => {
 
 export const generateRandomString = (length: number, plusStr: string): string => {
     const randomStr = Buffer.from(uuidv4() + plusStr).toString("base64");
-    const lenToTrim = Math.round((randomStr.length - length) / 2);
-    return randomStr.substring(lenToTrim, randomStr.length - lenToTrim);
+    const lenToTrim = randomStr.length - length;
+    const randomCut = getRandomNumber(1, lenToTrim - 1);
+    const fromEnd = lenToTrim - randomCut;
+    return randomStr.substring(randomCut, randomStr.length - fromEnd);
+}
+
+const getRandomNumber = (min: number, max: number) => {
+    return Math.random() * (max - min) + min
 }

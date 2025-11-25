@@ -28,7 +28,7 @@ import {PaginationModel} from "@backend/PaginationModel";
 import {ApplicationSubscriptionsEntity} from "@backend/ApplicationSubscriptionsEntity";
 import {CreateNewFolder} from "@mui/icons-material";
 import SubscriptionCard from "../../components/SubscriptionCard";
-import {mapToSubscriptionCardApp} from "../../model/GeneralSubscriptions";
+import {mapToSubscriptionCardAppAdminShow} from "../../model/GeneralSubscriptions";
 import {Link as RouterLink, useNavigate} from "react-router-dom";
 import SubscriptionDragGrid from "../../components/SubscriptionDragGrid";
 import Home from "../Home";
@@ -298,7 +298,7 @@ export default function Dashboard({loading, app, user, restriction}: {
                             >
                                 {subscriptions.filter(s => s.active).map((sub) => (
                                     <Grid key={"grid" + sub.id} item xs={6} md={4} display="flex">
-                                        <SubscriptionCard {...mapToSubscriptionCardApp(sub)} onBuy={() => setSnackbar({
+                                        <SubscriptionCard {...mapToSubscriptionCardAppAdminShow(sub)} onBuy={() => setSnackbar({
                                             open: true,
                                             severity: "success",
                                             message: "When pressing this button the user buy the subscription type"

@@ -9,6 +9,7 @@ export interface GeneralSubscriptionsEntity {
     stripeProductId: string,
     price: number,
     percentage: number,
+    fixFee: number,
     currency: string,
     active: boolean,
     expiresAt: Date

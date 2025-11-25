@@ -106,14 +106,14 @@ export default function KeysTable({title, sub, filter} : {title: string; sub: {i
                 {codes.items.map((item) => (
                     <ListItem
                         key={item.id}
-                        secondaryAction={
-                            <IconButton color="primary" onClick={() => console.log('regen')}>
-                                <RefreshIcon />
-                            </IconButton>
-                        }
+                        // secondaryAction={
+                        //     <IconButton color="primary" onClick={() => console.log('regen')}>
+                        //         <RefreshIcon />
+                        //     </IconButton>
+                        // }
                     >
                         <ListItemText
-                            primary={`${item.key}`}
+                            primary={`${item.appKey}`}
                             secondary={
                                 <>
                         <span>

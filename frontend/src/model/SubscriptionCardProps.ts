@@ -4,6 +4,7 @@ export interface SubscriptionCardProps {
     id: string;
     title: string;
     description?: string;
+    applicationId?: string;
     active: boolean;
     price: number;
     items?: string[];
@@ -17,6 +18,7 @@ export interface SubscriptionCardProps {
     onActivate?: () => void;
     onDeactivate?: () => void;
     onBuy?: () => void;
+    subsType: "general" | "application";
 
     noButtons?: boolean;
 

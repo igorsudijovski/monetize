@@ -16,7 +16,7 @@ import {
     ListItem,
     ListItemText,
     Divider,
-    Grid, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Alert, Snackbar,
+    Grid, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Alert, Snackbar, Link,
 } from "@mui/material";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import {GeneralSubscriptionsEntity} from "@backend/GeneralSubscriptionsEntity";
@@ -24,10 +24,14 @@ import {AxiosContext} from "../../api/axiosInstance";
 import {mapToSubscriptionCard} from "../../model/GeneralSubscriptions";
 import SubscriptionCard from "../../components/SubscriptionCard";
 import {UserEntity} from "@backend/UserEntity";
+import {useStateDebounced} from "../../hook/useStateDebounce";
 
 export default function MySubscription({user, app, restriction} : {user: UserEntity | null, app: ApplicationsEntity | null, restriction: Restriction | null}) {
     const { axios } = useContext(AxiosContext);
 
+    const [urlNameTerm, urlNameValue, setUrlNameTerm] = useStateDebounced('', 400);
+    const [hasError, setHasError] = useState(false);
+    const [realUrlName, setRealUrlName] = useState(app?.urlName || "");
     const [showClientId, setShowClientId] = useState(false);
     const [showClientSecret, setShowClientSecret] = useState(false);
     const [sub, setSub] = useState<GeneralSubscriptionsEntity | null>(null);
@@ -42,6 +46,8 @@ export default function MySubscription({user, app, restriction} : {user: UserEnt
         tileColor: "#1976d2",
         backgroundColor: "#f5f5f5",
         redirectUrl: "",
+        urlName: "",
+
     });
 
     useEffect(() => {
@@ -53,7 +59,10 @@ export default function MySubscription({user, app, restriction} : {user: UserEnt
                 tileColor: app.fontColor || "#1976d2",
                 backgroundColor: app.backgroundColor || "#f5f5f5",
                 redirectUrl: app.redirectUrl || "",
+                urlName: app.urlName || "",
             });
+            setUrlNameTerm(app.urlName);
+            setRealUrlName(app.urlName);
             axios.get('/general/subscriptions')
                 .then(response => {
                     setSubscriptions(response.data);
@@ -73,6 +82,20 @@ export default function MySubscription({user, app, restriction} : {user: UserEnt
     const handleFormChange = (e) => {
         setAppForm({ ...appForm, [e.target.name]: e.target.value });
     };
+
+    useEffect(() => {
+        if (urlNameValue.trim() === "" || hasError) {
+            return;
+        }
+        axios.get(`/api/urlExists/${urlNameValue}`, { withCredentials: true })
+            .then(response => {
+                if (!response.data.exists) {
+                    setAppForm({ ...appForm, urlName: urlNameValue });
+                }})
+            .catch(error => {
+                console.error('Error checking URL name:', error)
+            });
+    }, [urlNameValue]);
 
     const openModal = () => {
         setModalOpen(true);
@@ -100,13 +123,26 @@ export default function MySubscription({user, app, restriction} : {user: UserEnt
 
     };
 
+    const hasErrorInUrlName = (name: string): void => {
+        if (name.trim().length < 3 || name.trim().length > 50) {
+            setHasError(true);
+        } else
+        if (/^[a-zA-Z][a-zA-Z0-9-_]+$/.test(name)) {
+            setHasError(false);
+        } else {
+            setHasError(true);
+        }
+    }
+
     const saveAppSettings = () => {
         if (!app) return;
         app.name = appForm.name;
         app.redirectUrl = appForm.redirectUrl;
+        app.urlName = appForm.urlName;
         axios.put('/api/my-subscription', app, { withCredentials: true })
             .then(response => {
                 setSnackbar({open: true, severity: "success", message: "Application updated successfully"});
+                setRealUrlName(appForm.urlName);
                 console.log('Application updated successfully');
             })
             .catch(error => console.error('Error updating application:', error));
@@ -176,6 +212,17 @@ export default function MySubscription({user, app, restriction} : {user: UserEnt
                         {/*</Grid>*/}
                         <Grid item xs={12}>
                             <TextField
+                                label="Page url"
+                                name="urlName"
+                                fullWidth
+                                error={hasError}
+                                helperText={hasError ? "This URL name is already taken." : ""}
+                                value={urlNameTerm}
+                                onChange={(e) => {hasErrorInUrlName(e.target.value); setUrlNameTerm(e.target.value)}}
+                            />
+                        </Grid>
+                        <Grid item xs={12}>
+                            <TextField
                                 label="Redirect URL"
                                 name="redirectUrl"
                                 fullWidth
@@ -185,6 +232,17 @@ export default function MySubscription({user, app, restriction} : {user: UserEnt
                         </Grid>
                     </Grid>
 
+                    <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mt: 2, fontStyle: "italic" }}
+                    >
+                        Url page:{" "}
+                        <Link href={`${window.location.origin}/app/${realUrlName}`} target={"_blank"} rel="noopener noreferrer">
+                            {appForm.urlName
+                            ? `${window.location.origin}/app/${realUrlName}`
+                            : "Your URL will appear here"}</Link>
+                    </Typography>
                     <Typography
                         variant="body2"
                         color="text.secondary"

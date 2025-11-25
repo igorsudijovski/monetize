@@ -3,7 +3,8 @@ export interface ApplicationSubscriptionsEntity {
     name: string;
     description?: string;
     bulletText: string[];
-    price: number,
+    applicationId: string;
+    price: number;
     stripePriceId?: string,
     stripeProductId?: string,
     currency: string,

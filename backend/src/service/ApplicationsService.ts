@@ -16,8 +16,8 @@ export const getApplicationByUserId = async (id: string): Promise<ApplicationsEn
 }
 
 export const updateApplication = async (app: ApplicationsEntity): Promise<boolean> => {
-    const result: QueryArrayResult = await db.query("update applications set name = $1, redirect_url = $2 where id = $3 returning id",
-        [app.name, app.redirectUrl, app.id]);
+    const result: QueryArrayResult = await db.query("update applications set name = $1, redirect_url = $2, url_name = $3 where id = $4 returning id",
+        [app.name, app.redirectUrl, app.urlName, app.id]);
     const subs = emptyOrRows(result.rows);
     return subs.length === 1;
 }
@@ -31,6 +31,14 @@ export const getApplicationByUserIdAndAppId = async (id: string, appId: string):
 }
 export const getApplicationAppId = async (id: string): Promise<ApplicationsEntity | undefined> => {
     const result: QueryArrayResult = await db.query("select * from applications where id = $1", [id]);
+    const subs = emptyOrRows(result.rows);
+    if (subs.length !== 1) {
+        return undefined;
+    }
+    return mapApplication(subs[0]);
+}
+export const getApplicationUrlName = async (urlName: string): Promise<ApplicationsEntity | undefined> => {
+    const result: QueryArrayResult = await db.query("select * from applications where url_name = $1", [urlName]);
     const subs = emptyOrRows(result.rows);
     if (subs.length !== 1) {
         return undefined;
