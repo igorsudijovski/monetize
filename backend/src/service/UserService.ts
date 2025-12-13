@@ -60,7 +60,7 @@ const getApplicationIdsByUserId = async (userId: string): Promise<string | undef
 }
 
 const getApplicationKeysByUserId = async (userId: string): Promise<{id: string, name: string}[]> => {
-    const result: QueryArrayResult = await db.query("select distinct app.id as id, app.name as name from application_subscription_keys as ask " +
+    const result: QueryArrayResult = await db.query("select distinct app.url_name as id, app.name as name from application_subscription_keys as ask " +
         "left join application_subscriptions as aps on ask.application_subscription_id = aps.id " +
         "left join applications app on aps.application_id = app.id where ask.owner_id = $1 and ask.paid is true", [userId]);
     return emptyOrRows(result.rows);

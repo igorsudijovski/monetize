@@ -1,9 +1,23 @@
-import React from 'react'
+import React, {useEffect} from 'react'
 import {AppBar, Box, Button, Toolbar, Typography} from '@mui/material'
 import {Link as RouterLink} from 'react-router-dom'
 import {UserEntity} from "@backend/UserEntity";
 
 export default function NavbarAdmin({user} : {user: UserEntity | null}) {
+
+    const getLink = () => {
+        if (user && user.applicationSubscriptionIds && user.applicationSubscriptionIds.length > 0) {
+            return `/user/auth/${user.applicationSubscriptionIds[0].id}`;
+        }
+    }
+
+    const [urlLink, setUrlLink] = React.useState<string | undefined>(getLink());
+
+    useEffect(() => {
+        setUrlLink(getLink());
+    }, [user]);
+
+
 
     return (
         <AppBar position='static'>
@@ -17,6 +31,7 @@ export default function NavbarAdmin({user} : {user: UserEntity | null}) {
                     {user && user.applicationId &&
                         (<Button color='inherit' component={RouterLink} to='/auth/subscription'>My
                             Subscription</Button>)}
+                    {urlLink && (<Button color='inherit' component={RouterLink} to={urlLink}>Tokens</Button>)}
                     <Button color='inherit' component={RouterLink} to='/auth/logout'>Logout</Button>
                 </Box>
             </Toolbar>

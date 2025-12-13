@@ -5,6 +5,7 @@ export interface SubscriptionCardProps {
     title: string;
     description?: string;
     applicationId?: string;
+    appUrlName?: string;
     active: boolean;
     price: number;
     items?: string[];

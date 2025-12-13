@@ -11,6 +11,7 @@ import {AuthContext} from "../context/authContext";
 import {SubscriptionCardProps} from "../model/SubscriptionCardProps";
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import {AxiosContext} from "../api/axiosInstance";
 
 
 export default function SubscriptionCard({
@@ -20,6 +21,7 @@ export default function SubscriptionCard({
                                              price,
                                              active,
                                              applicationId,
+                                             appUrlName,
                                              items = [],
                                              type = "one_time",
                                              days,
@@ -37,6 +39,7 @@ export default function SubscriptionCard({
                                              move,
                                          }: SubscriptionCardProps) {
     const {isLoggedIn} = useContext(AuthContext);
+    const { axios } = useContext(AxiosContext);
 
     const printItems = (items: string[]) => (
         <ul style={{margin: 0, paddingLeft: 20}}>
@@ -75,12 +78,10 @@ export default function SubscriptionCard({
             }
 
             if (type !== 'subscription') {
-                return (<Link
-                    href={`http://localhost:4000/user/app/${applicationId}/buy/${id}`}>
-                    <Button color="primary" variant="contained">
+                return (
+                    <Button color="primary" variant="contained" onClick={handleBuy}>
                         Buy
-                    </Button>
-                </Link>);
+                    </Button>);
             }
             if (isLoggedIn) {
                 return (<Link
@@ -99,6 +100,22 @@ export default function SubscriptionCard({
         }
         return null;
     }
+
+    const handleBuy = async () => {
+        try {
+            const response = await axios.get(`/user/app/${applicationId}/buy/${id}`, {
+                withCredentials: isLoggedIn,
+                maxRedirects: 2
+            });
+            if (response.data.url) {
+                window.open(response.data.url, '_self');
+                return;
+            }
+        } catch (error) {
+            console.error('Error creating subscription payment:', error);
+        }
+    }
+
     const getGeneralSubsButtons = () => {
         if (subsType == 'general') {
             if (adminSide) {

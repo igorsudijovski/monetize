@@ -91,6 +91,8 @@ export default function MySubscription({user, app, restriction} : {user: UserEnt
             .then(response => {
                 if (!response.data.exists) {
                     setAppForm({ ...appForm, urlName: urlNameValue });
+                } else {
+                    setHasError(true);
                 }})
             .catch(error => {
                 console.error('Error checking URL name:', error)

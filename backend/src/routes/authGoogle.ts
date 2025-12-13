@@ -41,6 +41,8 @@ router.get('/google/callback', passport.authenticate('google', { session: false 
             return res.status(401).json({ message: 'Authentication failed: user not found' });
         }
         const urlParams = [];
+        let appUrlFromState: string | null = null;
+
         if (req.query.state !== undefined) {
             const params = new URLSearchParams(req.query.state as string);
             const appId = params.get('appId') || '';
@@ -55,18 +57,24 @@ router.get('/google/callback', passport.authenticate('google', { session: false 
             if (!(subId === 'undefined' || subId === 'null')) {
                 urlParams.push(`subId=${subId}`);
             }
+            const appUrl = params.get('appUrl') || '';
+            if (!(appUrl === 'undefined' || appUrl === 'null' || appUrl === '')) {
+                appUrlFromState = appUrl;
+            }
         }
-
-        if (user.applicationSubscriptionIds !== undefined && user.applicationSubscriptionIds.length > 0) {
-            urlParams.push(`redirect=user`);
-        }
-
         if (user.applicationId !== undefined && user.applicationId !== null) {
             urlParams.push(`redirect=dashboard`);
+        } else if (user.applicationSubscriptionIds !== undefined && user.applicationSubscriptionIds.length > 0) {
+            urlParams.push(`redirect=user`);
+            // Pass appUrl if logging in from specific app
+            if (appUrlFromState) {
+                urlParams.push(`appUrl=${appUrlFromState}`);
+            } else {
+                urlParams.push(`appUrl=${user.applicationSubscriptionIds[0].id}`);
+            }
         }
 
         const refreshToken = generateRefresh(user.id);
-
 
 
         res.cookie('refreshToken', refreshToken, {

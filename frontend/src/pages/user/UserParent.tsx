@@ -26,7 +26,7 @@ export default function UserParent() {
         <>
             <NavbarApps name={appData.name} link={appData.id} />
             <Routes>
-                <Route path='/' element={<AppSubscriptions app={appData} subs={subs}/>} />
+                <Route path='/' element={<AppSubscriptions app={appData} subs={subs} urlName={params.urlName || ''}/>} />
             </Routes>
         </>));
 }

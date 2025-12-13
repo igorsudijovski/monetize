@@ -44,7 +44,7 @@ export const createStripeSubscription = async (model: StripeSubscriptionModel): 
         ],
         automatic_tax: {enabled: true},
         tax_id_collection: {enabled: true},
-        success_url: `http://localhost:4000/user/app/${model.appId}/buy/${model.appSubId}/success?keyId=${model.keyId}&session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `http://localhost:4000/user/app/${model.appId}/buy/${model.appSubId}/success?keyId=${model.keyId}&appUrl=${model.appUrl}&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.FRONTEND_URL}/app/${model.appUrl}`,
         metadata: {productId: model.appSubId, keyId: model.keyId},
         subscription_data: {
@@ -80,7 +80,7 @@ export const createStripePayment = async (model: StripePaymentModel): Promise<st
         ],
         automatic_tax: {enabled: true},
         tax_id_collection: {enabled: true},
-        success_url: `http://localhost:4000/user/app/${model.appId}/buy/${model.appSubId}/success?keyId=${model.keyId}&session_id={CHECKOUT_SESSION_ID}`,
+        success_url: `http://localhost:4000/user/app/${model.appId}/buy/${model.appSubId}/success?keyId=${model.keyId}&appUrl=${model.appUrl}&session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.FRONTEND_URL}/app/${model.appUrl}`,
         metadata: {productId: model.appSubId, keyId: model.keyId}
     };

@@ -5,7 +5,7 @@ import SubscriptionCard from "../../components/SubscriptionCard";
 import {mapToSubscriptionCardApp} from "../../model/GeneralSubscriptions";
 
 
-export default function AppSubscriptions({app, subs}: {app: {id: string, name: string} | null, subs: ApplicationSubscriptionsEntity[]}) {
+export default function AppSubscriptions({app, subs, urlName}: {app: {id: string, name: string} | null, subs: ApplicationSubscriptionsEntity[], urlName: string}) {
     return app && (<Container sx={{ mt: 6, mb: 6 }}>
                 <Typography variant="h4" sx={{ fontWeight: "bold", mb: 4 }}>
                     {app.name}
@@ -18,7 +18,7 @@ export default function AppSubscriptions({app, subs}: {app: {id: string, name: s
                 >
                     {subs.map((sub) => (
                         <Grid key={"grid" + sub.id} item xs={6} md={4} display="flex">
-                            <SubscriptionCard {...mapToSubscriptionCardApp(sub)} />
+                            <SubscriptionCard {...mapToSubscriptionCardApp(sub)} appUrlName={urlName} />
                         </Grid>
                     ))}
                 </Grid>

@@ -5,7 +5,7 @@ import {createStripePayment, createStripeSubscription, isPaymentSuccessful} from
 import {getUserById} from "../service/UserService";
 import {getApplicationAppId, getApplicationUrlName} from "../service/ApplicationsService";
 import {getSubscriptionById} from "../service/GeneralSubscriptionService";
-import {createNewAppKey, updateAppKeyActive} from "../service/KeyService";
+import {createNewAppKey, getOwnerByKeyId, updateAppKeyActive} from "../service/KeyService";
 import process from "node:process";
 import {StripePaymentModel, StripeSubscriptionModel} from "../model/StripePaymentModel";
 import requireJwt from "../middleware/requireJwt";
@@ -43,7 +43,7 @@ router.get('/app/:appId/buy/:subscriptionId', optionalJwt, async (req: Request, 
     if (appSub == undefined || !appSub.active) {
         return res.status(400).json({message: 'Invalid Application Id'})
     }
-    if (appSub.numDays !== undefined && appSub.numDays >= 0) {
+    if (appSub.numDays !== undefined && appSub.numDays !== null && appSub.numDays >= 0) {
         return res.status(400).json({message: 'This is only for non subscription purchases'})
     }
 
@@ -81,7 +81,7 @@ router.get('/app/:appId/buy/:subscriptionId', optionalJwt, async (req: Request, 
         appId: app.id
     };
     const url = await createStripePayment(paymentModel);
-    return res.redirect(303, url);
+    return res.status(200).json({url: url});
 });
 
 router.get('/app/:appId/subscribe/:subscriptionId', requireJwt,  async (req: Request, res: Response) => {
@@ -124,7 +124,8 @@ router.get('/app/:appId/subscribe/:subscriptionId', requireJwt,  async (req: Req
         return res.status(400).json({message: 'Application owner has no Stripe account'})
     }
 
-    const percentage = generalAppSub.percentage + generalAppSub.fixFee * 100 / appSub.price;
+    const calculatedPercentage = generalAppSub.percentage + generalAppSub.fixFee * 100 / appSub.price;
+    const percentage = Math.round(calculatedPercentage * 100) / 100;
     const fee = (appSub.price * percentage);
     const key = await createNewAppKey(appSub.id, loggedInUser.id, appSub.price, fee / 100);
     const subscriptionModel: StripeSubscriptionModel = {
@@ -145,11 +146,18 @@ router.get('/app/:appId/buy/:subscriptionId/success', async (req: Request, res: 
     const keyId = req.query.keyId + '';
     const appSubId: string = req.params.subscriptionId;
     const appId = req.params.appId + '';
+    const appUrl = req.query.appUrl + '';
 
     const success = await isPaymentSuccessful(sessionId);
     if (success) {
         const pageId = await updateAppKeyActive(keyId, sessionId, appSubId);
-        return res.redirect(303, process.env.FRONTEND_URL + `/sub/${appSubId}/keys/${pageId}`);
+        const ownerId = await getOwnerByKeyId(keyId);
+        // If buyerId exists, user was logged in - redirect to user auth page
+        if (ownerId !== null) {
+            return res.redirect(303, process.env.FRONTEND_URL + `/user/auth/${appUrl}`);
+        }
+        // Otherwise redirect to public keys page
+        return res.redirect(303, process.env.FRONTEND_URL + `/sub/${appUrl}/keys/${pageId}`);
     }
     return res.redirect(303, process.env.FRONTEND_URL + `/app/${appId}'`);
 });
