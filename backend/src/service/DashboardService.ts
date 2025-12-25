@@ -1,6 +1,6 @@
 import {QueryArrayResult} from "pg";
 import db from "../db";
-import {camelize, emptyOrRows} from "./helper";
+import {camelize, emptyOrRows, roundToTwoDecimal} from "./helper";
 import {RevenuePerApp} from "../model/RevenuePerApp";
 import {PaginationModel} from "../model/PaginationModel";
 import {DashboardKeysEntity} from "../model/DashboardKeysEntity";
@@ -45,7 +45,10 @@ export const getRevenue = async (appId: string): Promise<RevenuePerApp[]> => {
             }
         }
     })
-    return Array.from(values.values());
+    return Array.from(values.values()).map(v => {
+        v.revenue = roundToTwoDecimal(v.revenue)
+        return v;
+    });
 }
 export const getIssuedKeysThisMonth = async (appId: string): Promise<number> => {
     const result: QueryArrayResult = await db.query("select count(*) " +

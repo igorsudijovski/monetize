@@ -1,6 +1,6 @@
 import {Request, Response, Router} from "express";
 import {getAppSubscriptionById, getAppSubscriptions} from "../service/ApplicationSubscriptionService";
-import {isUUID} from "../service/helper";
+import {isUUID, roundToTwoDecimal} from "../service/helper";
 import {createStripePayment, createStripeSubscription, isPaymentSuccessful} from "../service/StripeService";
 import {getUserById} from "../service/UserService";
 import {getApplicationAppId, getApplicationUrlName} from "../service/ApplicationsService";
@@ -125,7 +125,7 @@ router.get('/app/:appId/subscribe/:subscriptionId', requireJwt,  async (req: Req
     }
 
     const calculatedPercentage = generalAppSub.percentage + generalAppSub.fixFee * 100 / appSub.price;
-    const percentage = Math.round(calculatedPercentage * 100) / 100;
+    const percentage = roundToTwoDecimal(calculatedPercentage);
     const fee = (appSub.price * percentage);
     const key = await createNewAppKey(appSub.id, loggedInUser.id, appSub.price, fee / 100);
     const subscriptionModel: StripeSubscriptionModel = {

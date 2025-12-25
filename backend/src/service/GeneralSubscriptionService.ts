@@ -1,7 +1,7 @@
 import {GeneralSubscriptionsEntity} from "../model/GeneralSubscriptionsEntity";
 import {QueryArrayResult} from "pg";
 import db from "../db";
-import {camelize, emptyOrRows} from "./helper";
+import {camelize, emptyOrRows, roundToTwoDecimal} from "./helper";
 
 export const getSubscriptions = async () : Promise<GeneralSubscriptionsEntity[]> => {
     const result: QueryArrayResult = await db.queryAll("select * from general_subscriptions where (expires_at is null or expires_at < now()) and active is true order by created_at desc");
@@ -27,5 +27,6 @@ const mapSubscription = (sub: any): GeneralSubscriptionsEntity => {
         sub.bulletText = sub.list_text.split("\\n");
         sub.list_text = undefined;
     }
+    sub.fix_fee = roundToTwoDecimal(sub.fix_fee);
     return camelize<GeneralSubscriptionsEntity>(sub);
 }

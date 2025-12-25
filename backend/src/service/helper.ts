@@ -17,6 +17,14 @@ export const camelize = <T>(obj: any): T => {
     }, {}) as T;
 }
 
+export const roundToTwoDecimal = (num?: string | number): number => {
+    if (num === undefined || isNaN((Number(num)))) {
+        return num as unknown as number;
+    }
+    const numb = Number(num);
+    return Math.round((numb + Number.EPSILON) * 100) / 100;
+}
+
 const camelCase = (str: string): string => {
     return str.replace(/[_.-](\w|$)/g, function (_, x) {
         return x.toUpperCase();
